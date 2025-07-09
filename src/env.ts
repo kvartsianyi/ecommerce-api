@@ -1,12 +1,7 @@
 import Joi from 'joi';
 
-const DEFAULT_PORT = 3000;
-
-enum NodeEnv {
-  DEVELOPMENT = 'development',
-  TEST = 'test',
-  PRODUCTION = 'production',
-}
+import logger from '@/logger';
+import { NodeEnv, DEFAULT_PORT } from '@/constants';
 
 const schema = Joi.object({
   NODE_ENV: Joi.string()
@@ -15,16 +10,22 @@ const schema = Joi.object({
     .required(),
   PORT: Joi.number().default(DEFAULT_PORT),
   DATABASE_URL: Joi.string().uri().required(),
-}).unknown(true);
+});
 
-const { value: envConfig, error } = schema.validate(process.env, { abortEarly: false });
+const { value: envConfig, error } = schema.validate(process.env, {
+  abortEarly: false,
+  stripUnknown: true,
+});
 
 if (error) {
-  console.log('Config error:');
-  for (const err of error.details) {
-    console.log(`- ${err.message}`);
+  const errorObj: Record<string, string> = {};
+
+  for (const { path, message } of error.details) {
+    const key = path.join('.');
+    errorObj[key] = message;
   }
 
+  logger.error('Config error:', errorObj, { context: 'Config' });
   process.exit(1);
 }
 

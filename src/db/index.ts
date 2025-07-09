@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 
 import ENV from '@/env';
+import logger from '@/logger';
 
 export const db = drizzle(ENV.DATABASE_URL, {
   logger: true,
@@ -8,8 +9,8 @@ export const db = drizzle(ENV.DATABASE_URL, {
 
 try {
   await db.execute('select 1');
-  console.log('Database connection successfully!');
+  logger.info('Database connection successfully!', { context: 'Bootstrap' });
 } catch (error) {
-  console.error('Database connection failed!\n', error);
+  logger.error('Database connection failed!', { context: 'Bootstrap', error });
   process.exit(1);
 }
