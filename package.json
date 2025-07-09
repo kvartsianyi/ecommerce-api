@@ -1,0 +1,31 @@
+{
+  "name": "ecommerce-api",
+  "type": "module",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node --env-file=.env dist/index.js",
+    "dev": "tsx --env-file=.env --watch src/index.ts",
+    "build": "tsc"
+  },
+  "author": "Yuriy Kvartsianiy",
+  "license": "ISC",
+  "description": "",
+  "keywords": [
+    "ecommerce",
+    "api"
+  ],
+  "dependencies": {
+    "express": "^5.1.0",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.12",
+    "tsc": "^2.0.4",
+    "tsx": "^4.20.3"
+  }
+}
