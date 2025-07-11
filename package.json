@@ -10,7 +10,7 @@
     "prepare": "husky",
     "start": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env --watch src/index.ts",
-    "build": "tsc && copyfiles \"./src/db/migrations/*.sql\" dist",
+    "build": "npx rimraf dist && tsc && copyfiles \"./src/db/migrations/*.sql\" dist",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "migrations": "npx drizzle-kit migrate",
@@ -47,6 +47,7 @@
     "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "tsc": "^2.0.4",
     "tsx": "^4.20.3"
   }
