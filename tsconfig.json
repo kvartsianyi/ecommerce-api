@@ -14,5 +14,9 @@
     }
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*.ts", "*.ts", "src/**/*.json"]
+  "include": ["src/**/*.ts", "*.ts", "src/**/*.json"],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "verbose": false
+  }
 }

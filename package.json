@@ -5,12 +5,12 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "main": "src/index.ts",
+  "main": "dist/src/index.js",
   "scripts": {
     "prepare": "husky",
-    "start": "node --env-file=.env dist/index.js",
+    "start": "node --env-file=.env dist/src/index.js",
     "dev": "tsx --env-file=.env --watch src/index.ts",
-    "build": "npx rimraf dist && tsc && copyfiles \"./src/db/migrations/*.sql\" dist",
+    "build": "npx rimraf dist && tsc && tsc-alias && copyfiles \"./src/db/migrations/*.sql\" dist",
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "migrations": "npx drizzle-kit migrate",
@@ -49,6 +49,7 @@
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "tsc": "^2.0.4",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.20.3"
   }
 }
