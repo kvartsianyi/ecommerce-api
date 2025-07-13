@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { db } from '@/db';
+import db from '@/db';
 
 const MIGRATIONS_DIR = './src/db/migrations';
 const JOURNAL_PATH = path.join(MIGRATIONS_DIR, 'meta/_journal.json');

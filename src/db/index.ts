@@ -1,10 +1,11 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 
+import * as schema from './schema';
 import ENV from '@/env';
 import logger from '@/logger';
 
-export const db = drizzle(ENV.DATABASE_URL, {
-  logger: true,
+const db = drizzle(ENV.DATABASE_URL, {
+  schema,
 });
 
 try {
@@ -14,3 +15,5 @@ try {
   logger.error('Database connection failed!', { context: 'Bootstrap', error });
   process.exit(1);
 }
+
+export default db;
