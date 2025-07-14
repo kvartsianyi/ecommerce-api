@@ -1,11 +1,11 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import morgan from 'morgan';
 
-import ENV from '@/env';
+import routes from '@/routes';
 import logger from '@/logger';
-import { HttpStatusCode } from '@/constants';
-import { HttpException } from '@/exceptions';
-import { notFoundMiddleware, wrapResponseMiddleware } from '@/middlewares';
+import ENV from '@/env';
+import { API_PREFIX } from '@/constants';
+import { notFoundMiddleware, errorHandlerMiddleware } from '@/middlewares';
 
 const app = express();
 
@@ -13,27 +13,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-app.use(wrapResponseMiddleware);
+app.use(API_PREFIX, routes);
 app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
 
 const server = app.listen(ENV.PORT, () =>
   logger.info('Server is running on port %d', ENV.PORT, { context: 'Bootstrap' }),
 );
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof HttpException) {
-    res.status(err.statusCode).json({
-      error: {
-        message: err.message,
-        code: err.statusCode,
-      },
-    });
-  } else {
-    logger.error('Unhandled error occurred', { context: 'ErrorHandler', error: err });
-    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Something went wrong!' });
-  }
-});
 
 const gracefulShutdown = (err?: Error | null) => server.close(() => process.exit(err ? 1 : 0));
 
