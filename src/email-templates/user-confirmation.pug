@@ -1,0 +1,16 @@
+extends layout.pug
+
+block content
+  .u-row-container(style="padding:0; background-color:transparent")
+    .u-row(style="margin:0 auto; max-width:600px; background-color:transparent")
+      .u-col.u-col-100(style="min-width:600px;")
+        table(font-family="helvetica, sans-serif", role="presentation", width="100%")
+          tbody
+            tr
+              td(style="padding:10px; text-align:center;")
+                div(style="font-size:18px; line-height:140%")
+                  p Hello, #{fullName}. Welcome to the Ecommerce shop.
+                  p Please, click on the button below to confirm email.
+
+  include components/button.pug
+  +button(frontendUrl + '/email/confirm?token=' + token, 'Confirm Email')

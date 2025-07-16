@@ -7,3 +7,8 @@ export enum NodeEnv {
   TEST = 'test',
   PRODUCTION = 'production',
 }
+
+export enum AppAction {
+  USER_AUTH = 'user-auth',
+  USER_CONFIRMATION = 'user-confirmation',
+}

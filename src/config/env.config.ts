@@ -9,7 +9,15 @@ const schema = Joi.object({
     .default(NodeEnv.DEVELOPMENT)
     .required(),
   PORT: Joi.number().default(DEFAULT_PORT),
+  FRONTEND_URL: Joi.string().uri().required(),
   DATABASE_URL: Joi.string().uri().required(),
+  SMTP_HOST: Joi.string().required(),
+  SMTP_PORT: Joi.number().integer().required(),
+  SMTP_USER: Joi.string().required(),
+  SMTP_PASS: Joi.string().required(),
+  SMTP_FROM: Joi.string().required(),
+  JWT_EMAIL_CONFIRM_SECRET: Joi.string().required(),
+  JWT_EMAIL_CONFIRM_LIFETIME: Joi.string().required(),
 });
 
 const { value: envConfig, error } = schema.validate(process.env, {

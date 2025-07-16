@@ -4,8 +4,8 @@ import { userController } from '@/controllers';
 import { validateBody, wrapAsyncErrors } from '@/middlewares';
 import { createUserSchema } from '@/validators';
 
-const authRouter = Router();
+const userRouter = Router();
 
-authRouter.post('/register', validateBody(createUserSchema), wrapAsyncErrors(userController.createUser));
+userRouter.post('/', validateBody(createUserSchema), wrapAsyncErrors(userController.createUser));
 
-export default authRouter;
+export default userRouter;

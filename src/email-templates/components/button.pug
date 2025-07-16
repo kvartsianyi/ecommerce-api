@@ -1,0 +1,24 @@
+mixin button(href, label)  
+	.u-row-container(style="padding:0; background-color:transparent")
+	.u-row(style="margin:0 auto; max-width:600px; background-color:transparent")
+	.u-col.u-col-100(style="min-width:600px;")
+		table(font-family="helvetica, sans-serif", role="presentation", width="100%")
+			tbody
+				tr
+					td(style="padding:25px; text-align:center;")
+						a.v-button(href=href, target="_blank", style="display:inline-block; color:#FFFFFF; background-color:#18292f; border-radius:4px; padding:10px 20px; font-size:14px; font-weight:700; text-decoration:none;")
+							span #{label}
+						
+	.u-row-container(style="padding:0; background-color:transparent")
+		.u-row(style="margin:0 auto; max-width:600px; background-color:transparent")
+			.u-col.u-col-100(style="min-width:600px;")
+				table(font-family="helvetica, sans-serif", role="presentation", width="100%")
+					tbody
+						tr
+							td(style="padding:25px; text-align:center;")
+								div(style="font-size: 14px; line-height: 140%;")
+									p
+										| If the button above doesn't work, copy and paste the following link into your browser: 
+									a(rel="noopener", href=href, target="_blank")= href
+
+							

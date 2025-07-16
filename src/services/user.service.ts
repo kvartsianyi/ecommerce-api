@@ -20,14 +20,14 @@ class UserService {
       throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXISTS);
     }
 
-    userData.password = await this.#hashPassword(userData.password);
+    userData.password = await this.hashPassword(userData.password);
 
     const [user] = await db.insert(users).values(userData).returning(publicUserFields);
 
     return user;
   }
 
-  async #hashPassword(password: string): Promise<string> {
+  private async hashPassword(password: string): Promise<string> {
     const hashedPassword = await bcrypt.hash(password, PASSWORD_SALT);
 
     return hashedPassword;

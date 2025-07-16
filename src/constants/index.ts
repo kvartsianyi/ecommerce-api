@@ -1,4 +1,4 @@
-export * from './app.constants';
+export * from './app.constant';
 export * from './role.constant';
 export * from './status.constant';
 export * from './http-status-code.constant';
