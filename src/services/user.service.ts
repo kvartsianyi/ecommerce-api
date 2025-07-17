@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 import db from '@/db';
 import { users } from '@/db/schema';
-import { BadRequestException } from '@/exceptions';
+import { BadRequestException, NotFoundException } from '@/exceptions';
 import { PASSWORD_SALT, ERROR_MESSAGES } from '@/constants';
 import { PublicUser, User } from '@/models';
 
@@ -17,7 +17,7 @@ class UserService {
     });
 
     if (existingUser) {
-      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXISTS);
+      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXIST);
     }
 
     userData.password = await this.hashPassword(userData.password);
@@ -25,6 +25,36 @@ class UserService {
     const [user] = await db.insert(users).values(userData).returning(publicUserFields);
 
     return user;
+  }
+
+  async activateUser(userId: number): Promise<PublicUser> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        id: true,
+        isEmailConfirmed: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
+    }
+
+    if (user.isEmailConfirmed) {
+      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_CONFIRMED);
+    }
+
+    const [activatedUser] = await db
+      .update(users)
+      .set({ isEmailConfirmed: true })
+      .where(eq(users.id, userId))
+      .returning(publicUserFields);
+
+    if (!activatedUser) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
+    }
+
+    return activatedUser;
   }
 
   private async hashPassword(password: string): Promise<string> {
