@@ -8,6 +8,6 @@ const userRouter = Router();
 
 userRouter
   .post('/', validateBody(createUserSchema), wrapAsyncErrors(userController.createUser))
-  .post('/activate/:token', wrapAsyncErrors(userController.activateUser));
+  .post('/email-confirm', wrapAsyncErrors(userController.confirmEmail));
 
 export default userRouter;
