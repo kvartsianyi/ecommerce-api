@@ -27,7 +27,7 @@ class UserService {
     return user;
   }
 
-  async activateUser(userId: number): Promise<PublicUser> {
+  async confirmEmail(userId: number): Promise<PublicUser> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: {
@@ -41,20 +41,20 @@ class UserService {
     }
 
     if (user.isEmailConfirmed) {
-      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_CONFIRMED);
+      throw new BadRequestException(ERROR_MESSAGES.EMAIL_ALREADY_CONFIRMED);
     }
 
-    const [activatedUser] = await db
+    const [updatedUser] = await db
       .update(users)
       .set({ isEmailConfirmed: true })
       .where(eq(users.id, userId))
       .returning(publicUserFields);
 
-    if (!activatedUser) {
+    if (!updatedUser) {
       throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
     }
 
-    return activatedUser;
+    return updatedUser;
   }
 
   private async hashPassword(password: string): Promise<string> {

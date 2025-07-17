@@ -27,8 +27,8 @@ class UserController {
     return res.status(HttpStatusCode.CREATED).json(serializeResponse(user));
   }
 
-  async activateUser(req: Request, res: Response): Promise<Response> {
-    const { token } = req.params;
+  async confirmEmail(req: Request, res: Response): Promise<Response> {
+    const { token } = req.body;
     let payload: EmailConfirmTokenPayload;
 
     try {
@@ -45,7 +45,7 @@ class UserController {
       throw new BadRequestException(ERROR_MESSAGES.TOKEN_INVALID_OR_EXPIRED);
     }
 
-    const activatedUser = await userService.activateUser(payload.userId);
+    const activatedUser = await userService.confirmEmail(payload.userId);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(activatedUser));
   }
