@@ -57,6 +57,12 @@ class UserService {
     return updatedUser;
   }
 
+  async findByEmail(email: string): Promise<User | undefined> {
+    return db.query.users.findFirst({
+      where: eq(users.email, email),
+    });
+  }
+
   private async hashPassword(password: string): Promise<string> {
     const hashedPassword = await bcrypt.hash(password, PASSWORD_SALT);
 

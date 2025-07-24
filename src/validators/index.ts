@@ -1,2 +1,2 @@
 export * from './user.validator';
-export * from './token.validator';
+export * from './common.validator';

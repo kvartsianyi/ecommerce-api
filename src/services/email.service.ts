@@ -28,8 +28,8 @@ try {
   logger.error('Mailer service connection failed!', { context: 'Bootstrap', error });
 }
 
-class MailService {
-  async sendMail(
+class EmailService {
+  async sendEmail(
     email: string,
     action: EmailTemplateActions,
     context: Record<string, unknown> = {},
@@ -53,4 +53,4 @@ class MailService {
   }
 }
 
-export default new MailService();
+export default new EmailService();

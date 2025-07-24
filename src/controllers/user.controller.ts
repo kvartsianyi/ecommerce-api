@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { userService, mailService, jwtService } from '@/services';
-import { HttpStatusCode, AppAction, UserRole, ERROR_MESSAGES } from '@/constants';
+import { userService, emailNotificationService, jwtService } from '@/services';
+import { HttpStatusCode, AppAction, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { serializeResponse } from '@/utils';
 import { EmailConfirmTokenPayload } from '@/models';
 import { BadRequestException } from '@/exceptions';
@@ -11,18 +11,7 @@ class UserController {
   async createUser(req: Request, res: Response): Promise<Response> {
     const user = await userService.createUser(req.body);
 
-    const payload: EmailConfirmTokenPayload = {
-      userId: user.id!,
-      role: user.role as UserRole,
-      action: AppAction.USER_CONFIRMATION,
-    };
-    const token = await jwtService.generateToken(payload, AppAction.USER_CONFIRMATION);
-
-    const context = {
-      fullName: `${user.firstName} ${user.lastName}`,
-      token,
-    };
-    await mailService.sendMail(user.email, AppAction.USER_CONFIRMATION, context);
+    await emailNotificationService.sendUserEmailConfirmation(user);
 
     return res.status(HttpStatusCode.CREATED).json(serializeResponse(user));
   }
@@ -48,6 +37,22 @@ class UserController {
     const activatedUser = await userService.confirmEmail(payload.userId);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(activatedUser));
+  }
+
+  async sendConfirmEmail(req: Request, res: Response): Promise<Response> {
+    const { user } = req;
+
+    if (user.isEmailConfirmed) {
+      throw new BadRequestException(ERROR_MESSAGES.EMAIL_ALREADY_CONFIRMED);
+    }
+
+    await emailNotificationService.sendUserEmailConfirmation(user);
+
+    return res.status(HttpStatusCode.OK).json(
+      serializeResponse({
+        message: SUCCESS_MESSAGES.EMAIL_SENT,
+      }),
+    );
   }
 }
 
