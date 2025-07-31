@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 
 import { userService, emailNotificationService, jwtService } from '@/services';
-import { HttpStatusCode, AppAction, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
+import { HttpStatusCode, TokenAction, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/constants';
 import { serializeResponse } from '@/utils';
 import { EmailConfirmTokenPayload } from '@/models';
 import { BadRequestException } from '@/exceptions';
@@ -18,19 +17,13 @@ class UserController {
 
   async confirmEmail(req: Request, res: Response): Promise<Response> {
     const { token } = req.body;
-    let payload: EmailConfirmTokenPayload;
 
-    try {
-      payload = await jwtService.verifyToken(token, AppAction.USER_CONFIRMATION);
-    } catch (err) {
-      if (err instanceof jwt.JsonWebTokenError) {
-        throw new BadRequestException(ERROR_MESSAGES.TOKEN_INVALID_OR_EXPIRED);
-      }
+    const payload = await jwtService.verifyToken<EmailConfirmTokenPayload>(
+      token,
+      TokenAction.USER_CONFIRMATION_TOKEN,
+    );
 
-      throw err;
-    }
-
-    if (payload.action !== AppAction.USER_CONFIRMATION) {
+    if (payload.action !== TokenAction.USER_CONFIRMATION_TOKEN) {
       throw new BadRequestException(ERROR_MESSAGES.TOKEN_INVALID_OR_EXPIRED);
     }
 

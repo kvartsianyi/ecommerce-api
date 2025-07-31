@@ -1,23 +1,29 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 import { TOKEN_CONFIG_MAP } from '@/config';
-import { DualTokenActions, SingleTokenActions, TokenConfig, TokenPair } from '@/models';
+import { TokenConfig, TokenPair, TokenPairActions } from '@/models';
+import { ERROR_MESSAGES, TokenAction } from '@/constants';
+import { BadRequestException } from '@/exceptions';
 
 class JwtService {
-  async generateTokenPair(payload: JwtPayload, action: DualTokenActions): Promise<TokenPair> {
-    const tokenPairConfig = TOKEN_CONFIG_MAP[action];
+  async generateTokenPair(
+    payload: JwtPayload,
+    { accessTokenAction, refreshTokenAction }: TokenPairActions,
+  ): Promise<TokenPair> {
+    const accessTokenConfig = TOKEN_CONFIG_MAP[accessTokenAction];
+    const refreshTokenConfig = TOKEN_CONFIG_MAP[refreshTokenAction];
 
-    const accessToken = await this.generateToken(payload, tokenPairConfig.ACCESS_TOKEN);
-    const refreshToken = await this.generateToken(payload, tokenPairConfig.REFRESH_TOKEN);
+    const accessToken = await this.generateToken(payload, accessTokenConfig);
+    const refreshToken = await this.generateToken(payload, refreshTokenConfig);
 
     return { accessToken, refreshToken };
   }
 
-  async generateToken(payload: JwtPayload, action: SingleTokenActions): Promise<string>;
+  async generateToken(payload: JwtPayload, action: TokenAction): Promise<string>;
   async generateToken(payload: JwtPayload, config: TokenConfig): Promise<string>;
   async generateToken(
     payload: JwtPayload,
-    actionOrConfig: SingleTokenActions | TokenConfig,
+    actionOrConfig: TokenAction | TokenConfig,
   ): Promise<string> {
     const tokenConfig = this.getTokenConfig(actionOrConfig);
 
@@ -28,7 +34,7 @@ class JwtService {
 
   async verifyToken<T extends JwtPayload = JwtPayload>(
     token: string,
-    action: SingleTokenActions,
+    action: TokenAction,
   ): Promise<T>;
   async verifyToken<T extends JwtPayload = JwtPayload>(
     token: string,
@@ -36,16 +42,24 @@ class JwtService {
   ): Promise<T>;
   async verifyToken<T extends JwtPayload = JwtPayload>(
     token: string,
-    actionOrConfig: SingleTokenActions | TokenConfig,
+    actionOrConfig: TokenAction | TokenConfig,
   ): Promise<T> {
-    const tokenConfig = this.getTokenConfig(actionOrConfig);
+    try {
+      const tokenConfig = this.getTokenConfig(actionOrConfig);
 
-    const payload = (await jwt.verify(token, tokenConfig.SECRET_KEY)) as T;
+      const payload = (await jwt.verify(token, tokenConfig.SECRET_KEY)) as T;
 
-    return payload;
+      return payload;
+    } catch (err) {
+      if (err instanceof jwt.JsonWebTokenError) {
+        throw new BadRequestException(ERROR_MESSAGES.TOKEN_INVALID_OR_EXPIRED);
+      }
+
+      throw err;
+    }
   }
 
-  private getTokenConfig(actionOrConfig: SingleTokenActions | TokenConfig): TokenConfig {
+  private getTokenConfig(actionOrConfig: TokenAction | TokenConfig): TokenConfig {
     return typeof actionOrConfig === 'string'
       ? (TOKEN_CONFIG_MAP[actionOrConfig] as TokenConfig)
       : actionOrConfig;

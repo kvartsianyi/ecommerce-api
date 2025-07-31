@@ -1,24 +1,19 @@
 import { SignOptions } from 'jsonwebtoken';
 
-import { AppAction, UserRole } from '@/constants';
+import { TokenAction, UserRole } from '@/constants';
 
 export type TokenConfig = {
   SECRET_KEY: string;
   LIFETIME: SignOptions['expiresIn'];
 };
 
-export type DualTokenConfig = {
-  ACCESS_TOKEN: TokenConfig;
-  REFRESH_TOKEN: TokenConfig;
+export type TokenPairActions = {
+  accessTokenAction: TokenAction.USER_ACCESS_TOKEN;
+  refreshTokenAction: TokenAction.USER_REFRESH_TOKEN;
 };
 
-export type DualTokenActions = AppAction.USER_AUTH;
-export type SingleTokenActions = Exclude<AppAction, DualTokenActions>;
-
 export type TokenConfigMap = {
-  [K in DualTokenActions]: DualTokenConfig;
-} & {
-  [K in SingleTokenActions]: TokenConfig;
+  [K in TokenAction]: TokenConfig;
 };
 
 export interface TokenPair {
@@ -29,7 +24,7 @@ export interface TokenPair {
 export interface EmailConfirmTokenPayload {
   userId: number;
   role: UserRole;
-  action: AppAction.USER_CONFIRMATION;
+  action: TokenAction.USER_CONFIRMATION_TOKEN;
 }
 
 export interface AuthTokenPairPayload {

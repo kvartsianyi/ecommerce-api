@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 import { jwtService } from '@/services';
-import { HttpStatusCode, AppAction, UserRole } from '@/constants';
+import { HttpStatusCode, TokenAction, UserRole } from '@/constants';
 import { serializeResponse } from '@/utils';
 import { AuthTokenPairPayload } from '@/models';
 
@@ -13,9 +13,24 @@ class AuthController {
       userId: user.id!,
       role: user.role as UserRole,
     };
-    const tokenPair = await jwtService.generateTokenPair(payload, AppAction.USER_AUTH);
+    const tokenPair = await jwtService.generateTokenPair(payload, {
+      accessTokenAction: TokenAction.USER_ACCESS_TOKEN,
+      refreshTokenAction: TokenAction.USER_REFRESH_TOKEN,
+    });
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(tokenPair));
+  }
+
+  async tokenRefresh(req: Request, res: Response): Promise<Response> {
+    const user = req.user!;
+
+    const payload: AuthTokenPairPayload = {
+      userId: user.id!,
+      role: user.role as UserRole,
+    };
+    const accessToken = await jwtService.generateToken(payload, TokenAction.USER_ACCESS_TOKEN);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse({ accessToken }));
   }
 }
 

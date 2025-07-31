@@ -1,3 +1,3 @@
-import { AppAction } from '@/constants';
+import { TokenAction } from '@/constants';
 
-export type EmailTemplateActions = AppAction.USER_CONFIRMATION;
+export type EmailTemplateActions = TokenAction.USER_CONFIRMATION_TOKEN;

@@ -57,6 +57,12 @@ class UserService {
     return updatedUser;
   }
 
+  async findById(id: number): Promise<User | undefined> {
+    return db.query.users.findFirst({
+      where: eq(users.id, id),
+    });
+  }
+
   async findByEmail(email: string): Promise<User | undefined> {
     return db.query.users.findFirst({
       where: eq(users.email, email),

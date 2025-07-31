@@ -1,4 +1,4 @@
-import { AppAction, UserRole } from '@/constants';
+import { TokenAction, UserRole } from '@/constants';
 import { EmailConfirmTokenPayload, PublicUser, User } from '@/models';
 import jwtService from './jwt.service';
 import emailService from './email.service';
@@ -8,12 +8,12 @@ class EmailNotificationService {
     const payload: EmailConfirmTokenPayload = {
       userId: user.id!,
       role: user.role as UserRole,
-      action: AppAction.USER_CONFIRMATION,
+      action: TokenAction.USER_CONFIRMATION_TOKEN,
     };
 
-    const token = await jwtService.generateToken(payload, AppAction.USER_CONFIRMATION);
+    const token = await jwtService.generateToken(payload, TokenAction.USER_CONFIRMATION_TOKEN);
 
-    await emailService.sendEmail(user.email, AppAction.USER_CONFIRMATION, {
+    await emailService.sendEmail(user.email, TokenAction.USER_CONFIRMATION_TOKEN, {
       fullName: `${user.firstName} ${user.lastName}`,
       token,
     });
