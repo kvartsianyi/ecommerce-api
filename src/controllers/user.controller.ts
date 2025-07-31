@@ -40,7 +40,7 @@ class UserController {
   }
 
   async sendConfirmEmail(req: Request, res: Response): Promise<Response> {
-    const { user } = req;
+    const user = req.user!;
 
     if (user.isEmailConfirmed) {
       throw new BadRequestException(ERROR_MESSAGES.EMAIL_ALREADY_CONFIRMED);

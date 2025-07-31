@@ -1,10 +1,10 @@
 import { eq, getTableColumns } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
 
 import db from '@/db';
 import { users } from '@/db/schema';
+import bcryptService from './bcrypt.service';
 import { BadRequestException, NotFoundException } from '@/exceptions';
-import { PASSWORD_SALT, ERROR_MESSAGES } from '@/constants';
+import { ERROR_MESSAGES } from '@/constants';
 import { PublicUser, User } from '@/models';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -20,7 +20,7 @@ class UserService {
       throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXIST);
     }
 
-    userData.password = await this.hashPassword(userData.password);
+    userData.password = await bcryptService.hashPassword(userData.password);
 
     const [user] = await db.insert(users).values(userData).returning(publicUserFields);
 
@@ -61,12 +61,6 @@ class UserService {
     return db.query.users.findFirst({
       where: eq(users.email, email),
     });
-  }
-
-  private async hashPassword(password: string): Promise<string> {
-    const hashedPassword = await bcrypt.hash(password, PASSWORD_SALT);
-
-    return hashedPassword;
   }
 }
 

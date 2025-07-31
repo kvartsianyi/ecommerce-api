@@ -1,9 +1,28 @@
+import { SignOptions } from 'jsonwebtoken';
 import Joi from 'joi';
 
 import logger from '@/logger';
 import { NodeEnv, DEFAULT_PORT } from '@/constants';
 
-const schema = Joi.object({
+interface EnvConfig {
+  NODE_ENV: NodeEnv;
+  PORT: number;
+  FRONTEND_URL: string;
+  DATABASE_URL: string;
+  SMTP_HOST: string;
+  SMTP_PORT: number;
+  SMTP_USER: string;
+  SMTP_PASS: string;
+  SMTP_FROM: string;
+  JWT_EMAIL_CONFIRM_SECRET: string;
+  JWT_EMAIL_CONFIRM_LIFETIME: SignOptions['expiresIn'];
+  JWT_ACCESS_TOKEN_SECRET: string;
+  JWT_ACCESS_TOKEN_LIFETIME: SignOptions['expiresIn'];
+  JWT_REFRESH_TOKEN_SECRET: string;
+  JWT_REFRESH_TOKEN_LIFETIME: SignOptions['expiresIn'];
+}
+
+const schema = Joi.object<EnvConfig>({
   NODE_ENV: Joi.string()
     .valid(...Object.values(NodeEnv))
     .default(NodeEnv.DEVELOPMENT)
@@ -18,6 +37,10 @@ const schema = Joi.object({
   SMTP_FROM: Joi.string().required(),
   JWT_EMAIL_CONFIRM_SECRET: Joi.string().required(),
   JWT_EMAIL_CONFIRM_LIFETIME: Joi.string().required(),
+  JWT_ACCESS_TOKEN_SECRET: Joi.string().required(),
+  JWT_ACCESS_TOKEN_LIFETIME: Joi.string().required(),
+  JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
+  JWT_REFRESH_TOKEN_LIFETIME: Joi.string().required(),
 });
 
 const { value: envConfig, error } = schema.validate(process.env, {
@@ -37,4 +60,4 @@ if (error) {
   process.exit(1);
 }
 
-export default envConfig;
+export default envConfig as EnvConfig;

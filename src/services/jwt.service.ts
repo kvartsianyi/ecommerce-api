@@ -4,10 +4,7 @@ import { TOKEN_CONFIG_MAP } from '@/config';
 import { DualTokenActions, SingleTokenActions, TokenConfig, TokenPair } from '@/models';
 
 class JwtService {
-  async generateTokenPair(
-    action: DualTokenActions,
-    payload: Record<string, unknown>,
-  ): Promise<TokenPair> {
+  async generateTokenPair(payload: JwtPayload, action: DualTokenActions): Promise<TokenPair> {
     const tokenPairConfig = TOKEN_CONFIG_MAP[action];
 
     const accessToken = await this.generateToken(payload, tokenPairConfig.ACCESS_TOKEN);

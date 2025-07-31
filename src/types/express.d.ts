@@ -1,9 +1,8 @@
-import { User } from '@/models';
+import type { User as AppUser } from '@/models';
 
 declare global {
   namespace Express {
-    interface Request {
-      user: User;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface User extends AppUser {}
   }
 }

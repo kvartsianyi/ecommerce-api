@@ -31,3 +31,8 @@ export interface EmailConfirmTokenPayload {
   role: UserRole;
   action: AppAction.USER_CONFIRMATION;
 }
+
+export interface AuthTokenPairPayload {
+  userId: number;
+  role: UserRole;
+}

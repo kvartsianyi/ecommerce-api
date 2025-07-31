@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import morgan from 'morgan';
 
+import '@/passport';
 import routes from '@/routes';
 import logger from '@/logger';
 import { ENV } from '@/config';

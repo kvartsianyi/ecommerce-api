@@ -1,10 +1,10 @@
 import { AppAction, UserRole } from '@/constants';
-import { EmailConfirmTokenPayload, PublicUser } from '@/models';
+import { EmailConfirmTokenPayload, PublicUser, User } from '@/models';
 import jwtService from './jwt.service';
 import emailService from './email.service';
 
 class EmailNotificationService {
-  async sendUserEmailConfirmation(user: PublicUser): Promise<void> {
+  async sendUserEmailConfirmation(user: User | PublicUser): Promise<void> {
     const payload: EmailConfirmTokenPayload = {
       userId: user.id!,
       role: user.role as UserRole,
