@@ -1,13 +1,13 @@
 import { Router } from 'express';
 
 import { authController } from '@/controllers';
-import { localAuthentication, refreshTokenAuthentication, validateBody } from '@/middlewares';
+import { localAuth, refreshJwtAuth, validateBody } from '@/middlewares';
 import { loginSchema } from '@/validators';
 
 const authRouter = Router();
 
 authRouter
-  .post('/login', validateBody(loginSchema), localAuthentication, authController.login)
-  .post('/refresh', refreshTokenAuthentication, authController.tokenRefresh);
+  .post('/login', validateBody(loginSchema), localAuth, authController.login)
+  .post('/refresh', refreshJwtAuth, authController.tokenRefresh);
 
 export default authRouter;

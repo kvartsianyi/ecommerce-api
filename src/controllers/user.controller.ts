@@ -47,6 +47,17 @@ class UserController {
       }),
     );
   }
+
+  async getMe(req: Request, res: Response): Promise<Response> {
+    const user = req.user!;
+    const publicUser = userService.toPublicUser(user);
+
+    return res.status(HttpStatusCode.OK).json(
+      serializeResponse({
+        user: publicUser,
+      }),
+    );
+  }
 }
 
 export default new UserController();

@@ -7,6 +7,8 @@ import { BadRequestException, NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
 import { PublicUser, User } from '@/models';
 
+type FindByIdOptions = { isPublic?: false } | { isPublic: true };
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { password, ...publicUserFields } = getTableColumns(users);
 
@@ -57,10 +59,26 @@ class UserService {
     return updatedUser;
   }
 
-  async findById(id: number): Promise<User | undefined> {
-    return db.query.users.findFirst({
+  toPublicUser(user: User): PublicUser {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...publicUser } = user;
+
+    return publicUser;
+  }
+
+  async findById<T extends FindByIdOptions>(
+    id: number,
+    options?: T,
+  ): Promise<T extends { isPublic: true } ? PublicUser | undefined : User | undefined> {
+    const isPublic = options?.isPublic ?? false;
+    const publicFields = Object.fromEntries(Object.keys(publicUserFields).map(key => [key, true]));
+
+    const user = await db.query.users.findFirst({
       where: eq(users.id, id),
+      ...(isPublic ? { columns: publicFields } : {}),
     });
+
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
