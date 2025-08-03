@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
 
+import { ENV } from '@/config';
 import { HttpException } from '@/exceptions';
-import { HttpStatusCode } from '@/constants';
+import { HttpStatusCode, NodeEnv } from '@/constants';
 import logger from '@/logger';
 
 export const errorHandlerMiddleware = (
@@ -33,6 +34,7 @@ export const errorHandlerMiddleware = (
       error: {
         message: 'Something went wrong!',
         code: HttpStatusCode.INTERNAL_SERVER_ERROR,
+        stack: ENV.NODE_ENV !== NodeEnv.PRODUCTION ? (err as Error).stack : undefined,
       },
     });
   }

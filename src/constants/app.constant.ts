@@ -8,7 +8,8 @@ export enum NodeEnv {
   PRODUCTION = 'production',
 }
 
-export enum AppAction {
-  USER_AUTH = 'user-auth',
-  USER_CONFIRMATION = 'user-confirmation',
+export enum TokenAction {
+  USER_ACCESS_TOKEN = 'user-access-token',
+  USER_REFRESH_TOKEN = 'user-refresh-token',
+  USER_CONFIRMATION_TOKEN = 'user-confirmation-token',
 }

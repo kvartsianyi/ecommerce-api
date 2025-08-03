@@ -1,9 +1,9 @@
-import { AppAction } from '@/constants';
+import { TokenAction } from '@/constants';
 import { EmailTemplateActions } from '@/models';
 
 const emailTemplates: Record<EmailTemplateActions, { subject: string; templateFileName: string }> =
   {
-    [AppAction.USER_CONFIRMATION]: {
+    [TokenAction.USER_CONFIRMATION_TOKEN]: {
       subject: 'Please confirm your email',
       templateFileName: 'user-confirmation',
     },
