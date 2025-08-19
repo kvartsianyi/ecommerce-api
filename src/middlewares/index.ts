@@ -4,3 +4,4 @@ export * from './validate-body.middleware';
 export * from './attach-user-by-email.middleware';
 export * from './local-auth.middleware';
 export * from './jwt-auth.middleware';
+export * from './role.middleware';

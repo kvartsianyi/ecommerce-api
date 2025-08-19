@@ -5,4 +5,5 @@ export const ERROR_MESSAGES = {
   TOKEN_INVALID_OR_EXPIRED: 'Token is invalid or has expired',
   INVALID_CREDENTIALS: 'Invalid email or password',
   ACCOUNT_NOT_ACTIVATED: 'Account not activated. Please verify your email before logging in',
+  ADMIN_ROLE_REQUIRED: 'Only administrators can perform this action',
 } as const;
