@@ -2,21 +2,34 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import multer, { FileFilterCallback } from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
+import { cloudinaryConfig } from '@/config';
 import { BadRequestException } from '@/exceptions';
-import { ERROR_MESSAGES, MULTER_ERROR_CODE_MESSAGES, PRODUCT_IMAGE } from '@/constants';
+import { ERROR_MESSAGES, MULTER_ERROR_CODE_MESSAGES, PRODUCT_IMAGE_CONFIG } from '@/constants';
 
 const DEFAULT_FILES_MAX_COUNT = 5;
 
 export type UploadConfig = {
-  destination: string;
+  folder: string;
   multiple?: boolean;
   maxCount?: number;
   options?: multer.Options;
 };
 
-const getUniqueFilename = (file: Express.Multer.File): string =>
-  crypto.randomUUID() + path.extname(file.originalname).toLowerCase();
+const createCloudinaryStorage = (folder: string) =>
+  new CloudinaryStorage({
+    cloudinary: cloudinaryConfig,
+    params: (req, file) => {
+      const fileExtension = path.extname(file.originalname).substring(1);
+
+      return {
+        public_id: crypto.randomUUID(),
+        format: fileExtension,
+        folder,
+      };
+    },
+  });
 
 const filterByType =
   (types: string[]) => (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
@@ -43,15 +56,10 @@ const multerErrorHandler =
   };
 
 export const fileUpload = (config: UploadConfig): RequestHandler => {
-  const { multiple = false, maxCount = DEFAULT_FILES_MAX_COUNT, destination, options } = config;
-
-  const storage = multer.diskStorage({
-    destination,
-    filename: (req, file, cb) => cb(null, getUniqueFilename(file)),
-  });
+  const { multiple = false, folder, maxCount = DEFAULT_FILES_MAX_COUNT, options } = config;
 
   const upload = multer({
-    storage,
+    storage: createCloudinaryStorage(folder),
     ...options,
   });
 
@@ -63,9 +71,9 @@ export const fileUpload = (config: UploadConfig): RequestHandler => {
 };
 
 export const uploadProductImage = fileUpload({
-  destination: PRODUCT_IMAGE.UPLOAD_PATH,
+  folder: PRODUCT_IMAGE_CONFIG.FOLDER,
   options: {
-    fileFilter: filterByType(PRODUCT_IMAGE.ALLOWED_TYPES),
-    limits: { fileSize: PRODUCT_IMAGE.FILE_SIZE },
+    fileFilter: filterByType(PRODUCT_IMAGE_CONFIG.ALLOWED_MIME_TYPES),
+    limits: { fileSize: PRODUCT_IMAGE_CONFIG.MAX_FILE_SIZE },
   },
 });

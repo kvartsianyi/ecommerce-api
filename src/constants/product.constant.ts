@@ -1,6 +1,4 @@
-import path from 'node:path';
-
-import { UPLOADS_ENDPOINT, UPLOADS_FOLDER_PATH } from './app.constant';
+import { ImageMimeType } from './file.constant';
 
 export const PRODUCT_VALIDATION_CONDITIONS = {
   TITLE: {
@@ -21,16 +19,8 @@ export const PRODUCT_VALIDATION_CONDITIONS = {
   },
 } as const;
 
-export const PRODUCT_UPLOADS_FOLDER = 'products';
-export const PRODUCT_IMAGE_UPLOADS_FOLDER = 'images';
-
-export const PRODUCT_IMAGE = {
-  UPLOAD_PATH: path.resolve(
-    UPLOADS_FOLDER_PATH,
-    PRODUCT_UPLOADS_FOLDER,
-    PRODUCT_IMAGE_UPLOADS_FOLDER,
-  ),
-  BASE_URL: `${UPLOADS_ENDPOINT}/${PRODUCT_UPLOADS_FOLDER}/${PRODUCT_IMAGE_UPLOADS_FOLDER}`,
-  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
-  FILE_SIZE: 5 * 1024 * 1024, // 5 MB
+export const PRODUCT_IMAGE_CONFIG = {
+  ALLOWED_MIME_TYPES: [ImageMimeType.JPEG, ImageMimeType.PNG, ImageMimeType.WEBP],
+  MAX_FILE_SIZE: 5 * 1024 * 1024,
+  FOLDER: 'products',
 };

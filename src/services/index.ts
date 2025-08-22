@@ -4,3 +4,4 @@ export { default as emailNotificationService } from './email-notification.servic
 export { default as jwtService } from './jwt.service';
 export { default as bcryptService } from './bcrypt.service';
 export { default as productService } from './product.service';
+export { default as cloudinaryService } from './cloudinary.service';

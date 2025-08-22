@@ -3,8 +3,9 @@ import { eq } from 'drizzle-orm';
 import db from '@/db';
 import { products } from '@/db/schema';
 import { Product } from '@/models';
+import cloudinaryService from './cloudinary.service';
 import { BadRequestException } from '@/exceptions';
-import { ERROR_MESSAGES, PRODUCT_IMAGE } from '@/constants';
+import { ERROR_MESSAGES } from '@/constants';
 
 class ProductService {
   async createProduct(userId: number, productData: Product): Promise<Product> {
@@ -22,8 +23,12 @@ class ProductService {
       throw new BadRequestException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
-    const imageUrl = `${PRODUCT_IMAGE.BASE_URL}/${file.filename}`;
-    const updatedProduct = await this.updateById(productId, { picture: imageUrl });
+    const updatedProduct = await this.updateById(productId, { picture: file.path });
+
+    const publicId = cloudinaryService.getPublicIdFromUrl(product.picture);
+    if (publicId) {
+      await cloudinaryService.delete(publicId);
+    }
 
     return updatedProduct;
   }

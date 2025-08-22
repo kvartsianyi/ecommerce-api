@@ -20,6 +20,9 @@ interface EnvConfig {
   JWT_ACCESS_TOKEN_LIFETIME: SignOptions['expiresIn'];
   JWT_REFRESH_TOKEN_SECRET: string;
   JWT_REFRESH_TOKEN_LIFETIME: SignOptions['expiresIn'];
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
 }
 
 const schema = Joi.object<EnvConfig>({
@@ -41,6 +44,9 @@ const schema = Joi.object<EnvConfig>({
   JWT_ACCESS_TOKEN_LIFETIME: Joi.string().required(),
   JWT_REFRESH_TOKEN_SECRET: Joi.string().required(),
   JWT_REFRESH_TOKEN_LIFETIME: Joi.string().required(),
+  CLOUDINARY_CLOUD_NAME: Joi.string().required(),
+  CLOUDINARY_API_KEY: Joi.string().required(),
+  CLOUDINARY_API_SECRET: Joi.string().required(),
 });
 
 const { value: envConfig, error } = schema.validate(process.env, {

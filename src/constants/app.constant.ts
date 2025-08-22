@@ -11,9 +11,6 @@ export const API_PREFIX = '/api' as const;
 export const PUBLIC_ASSETS_ENDPOINT = '/public' as const;
 export const PUBLIC_ASSETS_FOLDER_PATH = resolve(__dirname, '../../', 'public');
 
-export const UPLOADS_ENDPOINT = '/uploads' as const;
-export const UPLOADS_FOLDER_PATH = resolve(__dirname, '../../', 'uploads');
-
 export enum NodeEnv {
   DEVELOPMENT = 'development',
   TEST = 'test',
