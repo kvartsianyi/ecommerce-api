@@ -26,6 +26,14 @@ class ProductController {
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(product));
   }
+
+  async deleteProduct(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+
+    await productService.deleteProduct(productId);
+
+    return res.status(HttpStatusCode.NO_CONTENT).json(serializeResponse({}));
+  }
 }
 
 export default new ProductController();

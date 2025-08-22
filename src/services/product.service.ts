@@ -33,6 +33,18 @@ class ProductService {
     return updatedProduct;
   }
 
+  async deleteProduct(productId: number): Promise<Product> {
+    const product = await this.findById(productId);
+
+    if (!product) {
+      throw new BadRequestException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
+    }
+
+    const deletedProduct = await this.deleteById(productId);
+
+    return deletedProduct;
+  }
+
   async findById(id: number): Promise<Product | undefined> {
     const product = await db.query.products.findFirst({
       where: eq(products.id, id),
@@ -47,6 +59,12 @@ class ProductService {
       .set(productData)
       .where(eq(products.id, productId))
       .returning();
+
+    return product;
+  }
+
+  async deleteById(productId: number): Promise<Product> {
+    const [product] = await db.delete(products).where(eq(products.id, productId)).returning();
 
     return product;
   }

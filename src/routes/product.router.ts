@@ -27,6 +27,7 @@ productRouter
     validateIdParam,
     uploadProductImage,
     productController.updateProductImage,
-  );
+  )
+  .delete('/:id', jwtAuth, requireAdmin, validateIdParam, productController.deleteProduct);
 
 export default productRouter;
