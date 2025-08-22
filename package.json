@@ -14,7 +14,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\"",
     "migrations": "npx drizzle-kit migrate",
-    "migrations:down": "tsx --env-file=.env src/db/migrations/migrations-down.ts"
+    "migrations:down": "tsx --env-file=.env src/db/migrations/migrations-down.ts",
+    "seeds": "tsx --env-file=.env src/db/seeds/index.ts"
   },
   "author": "Yuriy Kvartsianiy",
   "license": "ISC",
@@ -25,11 +26,14 @@
   ],
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^1.41.3",
     "drizzle-orm": "^0.44.2",
     "express": "^5.1.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -46,6 +50,7 @@
     "@types/joi": "^17.2.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.0.12",
     "@types/nodemailer": "^6.4.17",
     "@types/passport": "^1.0.17",

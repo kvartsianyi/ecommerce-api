@@ -9,7 +9,15 @@ const logFormat = printf(({ level, message, timestamp, context, ...restMeta }) =
 
   let meta = '';
   if (restMeta && restMeta.error instanceof Error) {
-    meta = `\n${restMeta.error.stack}`;
+    const error = restMeta.error;
+
+    meta = `\n${error.stack}`;
+
+    if (error?.cause) {
+      meta += error.cause instanceof Error
+        ? `\nCaused by: ${error.cause.stack}`
+        : `\nCause: ${JSON.stringify(error.cause, null, 2)}`;
+    }
   } else if (Object.keys(restMeta).length) {
     meta = `\n${JSON.stringify(restMeta, null, 2)}`;
   }
