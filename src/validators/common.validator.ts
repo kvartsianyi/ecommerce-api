@@ -9,12 +9,12 @@ export const PASSWORD_FIELD_SCHEMA = Joi.string().min(PASSWORD.MIN).max(PASSWORD
 
 export const idParamSchema = Joi.object({
   id: Joi.number().integer().min(0).required(),
-});
+}).required();
 
 export const tokenSchema = Joi.object({
   token: Joi.string().required(),
-});
+}).required();
 
 export const emailSchema = Joi.object({
   email: EMAIL_FIELD_SCHEMA,
-});
+}).required();

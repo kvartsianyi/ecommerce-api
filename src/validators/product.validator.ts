@@ -14,11 +14,13 @@ export const createProductSchema = Joi.object({
   description: DESCRIPTION_VALIDATOR,
   price: PRICE_VALIDATOR.required(),
   stock: STOCK_VALIDATOR.required(),
-});
+}).required();
 
 export const updateProductSchema = Joi.object({
   title: TITLE_VALIDATOR,
   description: DESCRIPTION_VALIDATOR,
   price: PRICE_VALIDATOR,
   stock: STOCK_VALIDATOR,
-}).min(1);
+})
+  .min(1)
+  .required();
