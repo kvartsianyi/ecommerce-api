@@ -26,6 +26,18 @@ class ProductService {
     return product;
   }
 
+  async updateProduct(productId: number, productData: Partial<Product>): Promise<Product> {
+    const product = await this.findById(productId);
+
+    if (!product) {
+      throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
+    }
+
+    const updatedProduct = await this.updateById(productId, productData);
+
+    return updatedProduct;
+  }
+
   async updateProductImage(productId: number, file: Express.Multer.File): Promise<Product> {
     const product = await this.findById(productId);
 

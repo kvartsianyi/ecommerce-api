@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { productController } from '@/controllers';
-import { createProductSchema } from '@/validators';
+import { createProductSchema, updateProductSchema } from '@/validators';
 import {
   jwtAuth,
   requireAdmin,
@@ -20,6 +20,14 @@ productRouter
     requireAdmin,
     validateBody(createProductSchema),
     productController.createProduct,
+  )
+  .patch(
+    '/:id',
+    jwtAuth,
+    requireAdmin,
+    validateIdParam,
+    validateBody(updateProductSchema),
+    productController.updateProduct,
   )
   .post(
     '/:id/image',

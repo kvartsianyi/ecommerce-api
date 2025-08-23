@@ -22,6 +22,15 @@ class ProductController {
     return res.status(HttpStatusCode.CREATED).json(serializeResponse(product));
   }
 
+  async updateProduct(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+    const productData = req.body;
+
+    const updateProduct = await productService.updateProduct(productId, productData);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(updateProduct));
+  }
+
   async updateProductImage(req: Request, res: Response): Promise<Response> {
     const productId = parseInt(req.params.id);
     const file = req?.file;
