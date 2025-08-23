@@ -29,7 +29,7 @@ productRouter
     validateBody(updateProductSchema),
     productController.updateProduct,
   )
-  .post(
+  .put(
     '/:id/image',
     jwtAuth,
     requireAdmin,
