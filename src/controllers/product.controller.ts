@@ -6,6 +6,14 @@ import { serializeResponse } from '@/utils';
 import { BadRequestException } from '@/exceptions';
 
 class ProductController {
+  async getProduct(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+
+    const product = await productService.getProduct(productId);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(product));
+  }
+
   async createProduct(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 

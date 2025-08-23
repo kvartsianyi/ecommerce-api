@@ -13,6 +13,7 @@ import {
 const productRouter = Router();
 
 productRouter
+  .get('/:id', jwtAuth, validateIdParam, productController.getProduct)
   .post(
     '/',
     jwtAuth,

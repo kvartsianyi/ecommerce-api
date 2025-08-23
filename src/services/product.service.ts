@@ -4,10 +4,20 @@ import db from '@/db';
 import { products } from '@/db/schema';
 import { Product } from '@/models';
 import cloudinaryService from './cloudinary.service';
-import { BadRequestException } from '@/exceptions';
+import { NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
 
 class ProductService {
+  async getProduct(productId: number): Promise<Product> {
+    const product = await this.findById(productId);
+
+    if (!product) {
+      throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
+    }
+
+    return product;
+  }
+
   async createProduct(userId: number, productData: Product): Promise<Product> {
     productData.userId = userId;
 
@@ -20,7 +30,7 @@ class ProductService {
     const product = await this.findById(productId);
 
     if (!product) {
-      throw new BadRequestException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
+      throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
     const updatedProduct = await this.updateById(productId, { picture: file.path });
@@ -37,7 +47,7 @@ class ProductService {
     const product = await this.findById(productId);
 
     if (!product) {
-      throw new BadRequestException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
+      throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
     const deletedProduct = await this.deleteById(productId);
