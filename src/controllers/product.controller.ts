@@ -6,12 +6,37 @@ import { serializeResponse } from '@/utils';
 import { BadRequestException } from '@/exceptions';
 
 class ProductController {
+  async getProducts(req: Request, res: Response): Promise<Response> {
+    const productFilters = req.query;
+
+    const { data, ...paginationMeta } = await productService.getProducts(productFilters);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(data, paginationMeta));
+  }
+
+  async getProductById(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+
+    const product = await productService.getProduct(productId);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(product));
+  }
+
   async createProduct(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 
     const product = await productService.createProduct(user.id!, req.body);
 
     return res.status(HttpStatusCode.CREATED).json(serializeResponse(product));
+  }
+
+  async updateProduct(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+    const productData = req.body;
+
+    const updateProduct = await productService.updateProduct(productId, productData);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(updateProduct));
   }
 
   async updateProductImage(req: Request, res: Response): Promise<Response> {
@@ -25,6 +50,14 @@ class ProductController {
     const product = await productService.updateProductImage(productId, file);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(product));
+  }
+
+  async deleteProduct(req: Request, res: Response): Promise<Response> {
+    const productId = parseInt(req.params.id);
+
+    await productService.deleteProduct(productId);
+
+    return res.status(HttpStatusCode.NO_CONTENT).json(serializeResponse({}));
   }
 }
 

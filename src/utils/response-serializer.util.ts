@@ -1,3 +1,3 @@
-export const serializeResponse = <T>(data: T): { data: T } => {
-  return { data };
+export const serializeResponse = <T>(data: T, extras?: Record<string, unknown>): { data: T } => {
+  return { data, ...extras };
 };

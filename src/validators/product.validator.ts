@@ -1,12 +1,36 @@
 import Joi from 'joi';
 
 import { PRODUCT_VALIDATION_CONDITIONS } from '@/constants';
+import { ORDER_BY_FIELDS_SCHEMA, PAGINATION_FIELDS_SCHEMA } from './common.validator';
+import { PRODUCT_ORDER_BY_FIELDS } from '@/models';
 
 const { TITLE, DESCRIPTION, PRICE, STOCK } = PRODUCT_VALIDATION_CONDITIONS;
 
+const TITLE_VALIDATOR = Joi.string().min(TITLE.MIN).max(TITLE.MAX);
+const DESCRIPTION_VALIDATOR = Joi.string().min(DESCRIPTION.MIN).max(DESCRIPTION.MAX);
+const PRICE_VALIDATOR = Joi.number().integer().min(PRICE.MIN).max(PRICE.MAX);
+const STOCK_VALIDATOR = Joi.number().integer().min(STOCK.MIN).max(STOCK.MAX);
+
 export const createProductSchema = Joi.object({
-  title: Joi.string().min(TITLE.MIN).max(TITLE.MAX).required(),
-  description: Joi.string().min(DESCRIPTION.MIN).max(DESCRIPTION.MAX),
-  price: Joi.number().integer().min(PRICE.MIN).max(PRICE.MAX).required(),
-  stock: Joi.number().integer().min(STOCK.MIN).max(STOCK.MAX).required(),
+  title: TITLE_VALIDATOR.required(),
+  description: DESCRIPTION_VALIDATOR,
+  price: PRICE_VALIDATOR.required(),
+  stock: STOCK_VALIDATOR.required(),
+}).required();
+
+export const updateProductSchema = Joi.object({
+  title: TITLE_VALIDATOR,
+  description: DESCRIPTION_VALIDATOR,
+  price: PRICE_VALIDATOR,
+  stock: STOCK_VALIDATOR,
+})
+  .min(1)
+  .required();
+
+export const getProductsQuery = Joi.object({
+  ...PAGINATION_FIELDS_SCHEMA,
+  ...ORDER_BY_FIELDS_SCHEMA(PRODUCT_ORDER_BY_FIELDS),
+  title: Joi.string().max(TITLE.MAX).trim(),
+  priceGt: PRICE_VALIDATOR,
+  priceLt: PRICE_VALIDATOR,
 });

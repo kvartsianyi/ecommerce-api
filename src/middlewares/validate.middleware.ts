@@ -9,7 +9,14 @@ const validate =
   (schema: ObjectSchema, path: ValidationPath = 'body') =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await schema.validateAsync(req[path], { abortEarly: false, stripUnknown: true });
+      const value = await schema.validateAsync(req[path], {
+        abortEarly: false,
+        stripUnknown: true,
+      });
+
+      Object.defineProperty(req, path, {
+        get: () => value,
+      });
 
       next();
     } catch (e) {
@@ -19,5 +26,6 @@ const validate =
 
 export const validateBody = validate;
 export const validateParams = (schema: ObjectSchema) => validate(schema, 'params');
+export const validateQuery = (schema: ObjectSchema) => validate(schema, 'query');
 
 export const validateIdParam = validateParams(idParamSchema);

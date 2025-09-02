@@ -10,4 +10,4 @@ export const createUserSchema = Joi.object({
   lastName: Joi.string().min(LAST_NAME.MIN).max(LAST_NAME.MAX).required(),
   email: EMAIL_FIELD_SCHEMA,
   password: PASSWORD_FIELD_SCHEMA,
-});
+}).required();
