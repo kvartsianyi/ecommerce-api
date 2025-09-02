@@ -1,18 +1,20 @@
 import { Router } from 'express';
 
 import { productController } from '@/controllers';
-import { createProductSchema, updateProductSchema } from '@/validators';
+import { createProductSchema, getProductsQuery, updateProductSchema } from '@/validators';
 import {
   jwtAuth,
   requireAdmin,
   validateBody,
   validateIdParam,
   uploadProductImage,
+  validateQuery,
 } from '@/middlewares';
 
 const productRouter = Router();
 
 productRouter
+  .get('/', jwtAuth, validateQuery(getProductsQuery), productController.getProducts)
   .get('/:id', jwtAuth, validateIdParam, productController.getProduct)
   .post(
     '/',

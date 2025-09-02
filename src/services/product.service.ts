@@ -1,13 +1,57 @@
-import { eq } from 'drizzle-orm';
+import { eq, ilike, lte, gte, count } from 'drizzle-orm';
 
 import db from '@/db';
 import { products } from '@/db/schema';
-import { Product } from '@/models';
+import {
+  FilterConfig,
+  GetProductsFilters,
+  OrderByConfig,
+  PaginatedResult,
+  Product,
+  ProductFilters,
+  ProductOrderByFields,
+} from '@/models';
 import cloudinaryService from './cloudinary.service';
 import { NotFoundException } from '@/exceptions';
-import { ERROR_MESSAGES } from '@/constants';
+import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE_NUMBER, ERROR_MESSAGES } from '@/constants';
+import { buildWhere, buildOrderBy, calcOffset, calcTotalPages } from '@/utils';
 
 class ProductService {
+  async getProducts(filters: GetProductsFilters): Promise<PaginatedResult<Product>> {
+    const { page = DEFAULT_PAGE_NUMBER, perPage = DEFAULT_ITEMS_PER_PAGE } = filters;
+
+    const filterConfig: FilterConfig<ProductFilters> = {
+      title: value => ilike(products.title, `%${value}%`),
+      priceGt: value => gte(products.price, value),
+      priceLt: value => lte(products.price, value),
+    };
+    const orderByConfig: OrderByConfig<ProductOrderByFields> = {
+      title: products.title,
+      price: products.price,
+    };
+
+    const whereConditions = buildWhere(filters, filterConfig);
+    const orderByConditions = buildOrderBy(filters, orderByConfig, products.createdAt);
+
+    const query = db
+      .select()
+      .from(products)
+      .where(whereConditions)
+      .limit(perPage)
+      .offset(calcOffset(page, perPage))
+      .orderBy(orderByConditions);
+    const countQuery = db.select({ count: count() }).from(products).where(whereConditions);
+
+    const [data, [{ count: totalCount }]] = await Promise.all([query, countQuery]);
+
+    return {
+      data,
+      page,
+      perPage,
+      totalPages: calcTotalPages(totalCount, perPage),
+    };
+  }
+
   async getProduct(productId: number): Promise<Product> {
     const product = await this.findById(productId);
 

@@ -1,6 +1,8 @@
 import Joi from 'joi';
 
 import { PRODUCT_VALIDATION_CONDITIONS } from '@/constants';
+import { ORDER_BY_FIELDS_SCHEMA, PAGINATION_FIELDS_SCHEMA } from './common.validator';
+import { PRODUCT_ORDER_BY_FIELDS } from '@/models';
 
 const { TITLE, DESCRIPTION, PRICE, STOCK } = PRODUCT_VALIDATION_CONDITIONS;
 
@@ -24,3 +26,11 @@ export const updateProductSchema = Joi.object({
 })
   .min(1)
   .required();
+
+export const getProductsQuery = Joi.object({
+  ...PAGINATION_FIELDS_SCHEMA,
+  ...ORDER_BY_FIELDS_SCHEMA(PRODUCT_ORDER_BY_FIELDS),
+  title: Joi.string().max(TITLE.MAX).trim(),
+  priceGt: PRICE_VALIDATOR,
+  priceLt: PRICE_VALIDATOR,
+});
