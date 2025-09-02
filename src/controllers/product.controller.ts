@@ -14,7 +14,7 @@ class ProductController {
     return res.status(HttpStatusCode.OK).json(serializeResponse(data, paginationMeta));
   }
 
-  async getProduct(req: Request, res: Response): Promise<Response> {
+  async getProductById(req: Request, res: Response): Promise<Response> {
     const productId = parseInt(req.params.id);
 
     const product = await productService.getProduct(productId);

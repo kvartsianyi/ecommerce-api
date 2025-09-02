@@ -15,7 +15,7 @@ const productRouter = Router();
 
 productRouter
   .get('/', jwtAuth, validateQuery(getProductsQuery), productController.getProducts)
-  .get('/:id', jwtAuth, validateIdParam, productController.getProduct)
+  .get('/:id', jwtAuth, validateIdParam, productController.getProductById)
   .post(
     '/',
     jwtAuth,
