@@ -1,15 +1,8 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 export const DEFAULT_PORT = 3000 as const;
 
 export const API_PREFIX = '/api' as const;
 
 export const PUBLIC_ASSETS_ENDPOINT = '/public' as const;
-export const PUBLIC_ASSETS_FOLDER_PATH = resolve(__dirname, '../../', 'public');
 
 export const DEFAULT_PAGE_NUMBER = 1 as const;
 export const DEFAULT_ITEMS_PER_PAGE = 10 as const;
