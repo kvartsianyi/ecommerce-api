@@ -4,12 +4,14 @@ import db from '@/db';
 import { products } from '@/db/schema';
 import {
   FilterConfig,
+  FindOptions,
   GetProductsFilters,
   OrderByConfig,
   PaginatedResult,
   Product,
   ProductFilters,
   ProductOrderByFields,
+  QueryContext,
 } from '@/models';
 import cloudinaryService from './cloudinary.service';
 import { NotFoundException } from '@/exceptions';
@@ -111,16 +113,27 @@ class ProductService {
     return deletedProduct;
   }
 
-  async findById(id: number): Promise<Product | undefined> {
-    const product = await db.query.products.findFirst({
-      where: eq(products.id, id),
-    });
+  async findById(
+    id: number,
+    { ctx = db, forUpdate = false }: FindOptions = {},
+  ): Promise<Product | undefined> {
+    const query = ctx.select().from(products).where(eq(products.id, id));
+
+    if (forUpdate) {
+      query.for('update');
+    }
+
+    const [product] = await query;
 
     return product;
   }
 
-  async updateById(productId: number, productData: Partial<Product>): Promise<Product> {
-    const [product] = await db
+  async updateById(
+    productId: number,
+    productData: Partial<Product>,
+    ctx: QueryContext = db,
+  ): Promise<Product> {
+    const [product] = await ctx
       .update(products)
       .set(productData)
       .where(eq(products.id, productId))

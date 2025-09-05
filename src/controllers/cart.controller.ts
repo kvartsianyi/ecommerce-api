@@ -1,0 +1,26 @@
+import { Request, Response } from 'express';
+
+import { HttpStatusCode } from '@/constants';
+import { cartService } from '@/services';
+import { serializeResponse } from '@/utils';
+
+class CartController {
+  async getUserCart(req: Request, res: Response): Promise<Response> {
+    const user = req.user!;
+
+    const cart = await cartService.getCartSummary(user.id);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
+  }
+
+  async addItemToCart(req: Request, res: Response): Promise<Response> {
+    const user = req.user!;
+    const cartItemData = req.body;
+
+    const cart = await cartService.addItemToCart(user.id!, cartItemData);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
+  }
+}
+
+export default new CartController();
