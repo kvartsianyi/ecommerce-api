@@ -21,6 +21,16 @@ class CartController {
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
   }
+
+  async updateCartItem(req: Request, res: Response): Promise<Response> {
+    const id = parseInt(req.params.id);
+    const user = req.user!;
+    const cartItemData = req.body;
+
+    const cart = await cartService.updateCartItem(user.id!, id, cartItemData);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
+  }
 }
 
 export default new CartController();

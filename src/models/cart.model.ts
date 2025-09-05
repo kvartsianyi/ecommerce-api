@@ -16,6 +16,7 @@ export interface CartSummaryItem {
   title: string;
   price: number;
   quantity: number;
+  stock: number;
 }
 
 export interface CartSummary {

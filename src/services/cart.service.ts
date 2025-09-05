@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, sql } from 'drizzle-orm';
 
 import db from '@/db';
 import { cartItems, carts, products } from '@/db/schema';
@@ -40,6 +40,28 @@ class CartService {
     return cartSummary!;
   }
 
+  async updateCartItem(
+    userId: number,
+    id: number,
+    cartItemData: Pick<CartItem, 'quantity'>,
+  ): Promise<CartSummary> {
+    const [cartItem] = await db
+      .select(getTableColumns(cartItems))
+      .from(cartItems)
+      .innerJoin(carts, eq(cartItems.cartId, carts.id))
+      .where(and(eq(cartItems.id, id), eq(carts.userId, userId)));
+
+    if (!cartItem) {
+      throw new NotFoundException(ERROR_MESSAGES.CART_ITEM_DOES_NOT_EXIST);
+    }
+
+    await this.updateCartItemById(id, cartItemData);
+
+    const cartSummary = await this.getCartSummary(userId);
+
+    return cartSummary!;
+  }
+
   async findCart(userId: number, ctx: QueryContext = db): Promise<Cart | undefined> {
     const cart = await ctx.query.carts.findFirst({
       where: eq(carts.userId, userId),
@@ -71,6 +93,7 @@ class CartService {
         'productId', ${products}.id,
         'title', ${products}.title,
         'price', ${products}.price,
+        'stock', ${products}.stock,
         'quantity', ${cartItems}.quantity
       )) FILTER (WHERE ${cartItems}.id IS NOT NULL)`;
 
@@ -87,6 +110,20 @@ class CartService {
       .groupBy(carts.id);
 
     return cartSummary ?? null;
+  }
+
+  async updateCartItemById(
+    id: number,
+    cartItemData: Partial<CartItem>,
+    ctx: QueryContext = db,
+  ): Promise<CartItem> {
+    const [cartItem] = await ctx
+      .update(cartItems)
+      .set(cartItemData)
+      .where(eq(cartItems.id, id))
+      .returning();
+
+    return cartItem;
   }
 
   async upsertCartItem(cartItemData: UpsertCartItem, ctx: QueryContext = db): Promise<CartItem> {
