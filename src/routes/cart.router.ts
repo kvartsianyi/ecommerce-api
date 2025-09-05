@@ -15,7 +15,8 @@ cartItemsRouter
     validateIdParam,
     validateBody(updateCartItemSchema),
     cartController.updateCartItem,
-  );
+  )
+  .delete('/:id', jwtAuth, validateIdParam, cartController.deleteCartItem);
 
 cartRouter.use('/items', cartItemsRouter);
 

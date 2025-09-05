@@ -45,11 +45,7 @@ class CartService {
     id: number,
     cartItemData: Pick<CartItem, 'quantity'>,
   ): Promise<CartSummary> {
-    const [cartItem] = await db
-      .select(getTableColumns(cartItems))
-      .from(cartItems)
-      .innerJoin(carts, eq(cartItems.cartId, carts.id))
-      .where(and(eq(cartItems.id, id), eq(carts.userId, userId)));
+    const cartItem = await this.findCartItemByUser(userId, id);
 
     if (!cartItem) {
       throw new NotFoundException(ERROR_MESSAGES.CART_ITEM_DOES_NOT_EXIST);
@@ -60,6 +56,18 @@ class CartService {
     const cartSummary = await this.getCartSummary(userId);
 
     return cartSummary!;
+  }
+
+  async deleteCartItem(userId: number, id: number): Promise<CartItem> {
+    const cartItem = await this.findCartItemByUser(userId, id);
+
+    if (!cartItem) {
+      throw new NotFoundException(ERROR_MESSAGES.CART_ITEM_DOES_NOT_EXIST);
+    }
+
+    const deletedCartItem = await this.deleteCartItemById(cartItem.id);
+
+    return deletedCartItem;
   }
 
   async findCart(userId: number, ctx: QueryContext = db): Promise<Cart | undefined> {
@@ -112,6 +120,16 @@ class CartService {
     return cartSummary ?? null;
   }
 
+  async findCartItemByUser(userId: number, cartItemId: number): Promise<CartItem | undefined> {
+    const [cartItem] = await db
+      .select(getTableColumns(cartItems))
+      .from(cartItems)
+      .innerJoin(carts, eq(cartItems.cartId, carts.id))
+      .where(and(eq(cartItems.id, cartItemId), eq(carts.userId, userId)));
+
+    return cartItem;
+  }
+
   async updateCartItemById(
     id: number,
     cartItemData: Partial<CartItem>,
@@ -137,6 +155,12 @@ class CartService {
         },
       })
       .returning();
+
+    return cartItem;
+  }
+
+  async deleteCartItemById(id: number): Promise<CartItem> {
+    const [cartItem] = await db.delete(cartItems).where(eq(cartItems.id, id)).returning();
 
     return cartItem;
   }

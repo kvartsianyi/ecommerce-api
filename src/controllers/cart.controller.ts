@@ -31,6 +31,15 @@ class CartController {
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
   }
+
+  async deleteCartItem(req: Request, res: Response): Promise<Response> {
+    const id = parseInt(req.params.id);
+    const user = req.user!;
+
+    await cartService.deleteCartItem(user.id!, id);
+
+    return res.status(HttpStatusCode.NO_CONTENT).json(serializeResponse({}));
+  }
 }
 
 export default new CartController();
