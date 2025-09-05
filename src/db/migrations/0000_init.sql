@@ -9,6 +9,7 @@ CREATE TABLE "cart_items" (
 	"quantity" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "cart_items_cart_id_product_id_unique" UNIQUE("cart_id","product_id"),
 	CONSTRAINT "cart_items_product_quantity_check" CHECK ("cart_items"."quantity" > 0)
 );
 --> statement-breakpoint
@@ -16,7 +17,8 @@ CREATE TABLE "carts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "carts_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
 CREATE TABLE "order_items" (

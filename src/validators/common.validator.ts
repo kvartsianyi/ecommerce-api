@@ -9,6 +9,7 @@ import { OrderDirection } from '@/models';
 
 const { PASSWORD } = USER_VALIDATION_CONDITIONS;
 
+export const NUMBER_ID_FIELD_SCHEMA = Joi.number().integer().min(0).required();
 export const EMAIL_FIELD_SCHEMA = Joi.string().email().required();
 export const PASSWORD_FIELD_SCHEMA = Joi.string().min(PASSWORD.MIN).max(PASSWORD.MAX).required();
 
@@ -23,7 +24,7 @@ export const ORDER_BY_FIELDS_SCHEMA = (orderByFields: readonly string[]) => ({
 });
 
 export const idParamSchema = Joi.object({
-  id: Joi.number().integer().min(0).required(),
+  id: NUMBER_ID_FIELD_SCHEMA,
 }).required();
 
 export const tokenSchema = Joi.object({

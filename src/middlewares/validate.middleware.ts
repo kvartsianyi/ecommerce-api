@@ -14,9 +14,7 @@ const validate =
         stripUnknown: true,
       });
 
-      Object.defineProperty(req, path, {
-        get: () => value,
-      });
+      Object.assign(req.params, value);
 
       next();
     } catch (e) {

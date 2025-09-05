@@ -1,12 +1,17 @@
 import express from 'express';
 import morgan from 'morgan';
-
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import '@/passport';
+
 import routes from '@/routes';
 import logger from '@/logger';
 import { ENV } from '@/config';
 import { notFoundMiddleware, errorHandlerMiddleware } from '@/middlewares';
-import { API_PREFIX, PUBLIC_ASSETS_ENDPOINT, PUBLIC_ASSETS_FOLDER_PATH } from '@/constants';
+import { API_PREFIX, PUBLIC_ASSETS_ENDPOINT } from '@/constants';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
@@ -14,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-app.use(PUBLIC_ASSETS_ENDPOINT, express.static(PUBLIC_ASSETS_FOLDER_PATH));
+app.use(PUBLIC_ASSETS_ENDPOINT, express.static(resolve(__dirname, '../', 'public')));
 
 app.use(API_PREFIX, routes);
 app.use(notFoundMiddleware);

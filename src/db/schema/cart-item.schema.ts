@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { serial, pgTable, timestamp, integer, check } from 'drizzle-orm/pg-core';
+import { serial, pgTable, timestamp, integer, check, unique } from 'drizzle-orm/pg-core';
 
 import products from './product.schema';
 import carts from './cart.schema';
@@ -18,7 +18,10 @@ const cartItems = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
-  table => [check('cart_items_product_quantity_check', sql`${table.quantity} > 0`)],
+  table => [
+    check('cart_items_product_quantity_check', sql`${table.quantity} > 0`),
+    unique('cart_items_cart_id_product_id_unique').on(table.cartId, table.productId),
+  ],
 );
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
