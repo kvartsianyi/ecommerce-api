@@ -9,6 +9,7 @@ import {
   CartSummary,
   CartSummaryItem,
   QueryContext,
+  FindOptions,
 } from '@/models';
 import { NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
@@ -94,7 +95,7 @@ class CartService {
     return cart;
   }
 
-  async getCartSummary(userId: number): Promise<CartSummary | null> {
+  async getCartSummary(userId: number, ctx: QueryContext = db): Promise<CartSummary | null> {
     const cartItemFields = sql<CartSummaryItem[]>`
       json_agg(json_build_object(
         'id', ${cartItems}.id,
@@ -105,7 +106,7 @@ class CartService {
         'quantity', ${cartItems}.quantity
       )) FILTER (WHERE ${cartItems}.id IS NOT NULL)`;
 
-    const [cartSummary] = await db
+    const [cartSummary] = await ctx
       .select({
         id: carts.id,
         totalAmount: sql<number>`COALESCE(SUM(${cartItems.quantity} * ${products.price})::int, 0)`,
@@ -128,6 +129,21 @@ class CartService {
       .where(and(eq(cartItems.id, cartItemId), eq(carts.userId, userId)));
 
     return cartItem;
+  }
+
+  async findCartItemsByCartId(
+    cartId: number,
+    { ctx = db, forUpdate = false }: FindOptions = {},
+  ): Promise<CartItem[]> {
+    const query = ctx.select().from(cartItems).where(eq(cartItems.cartId, cartId));
+
+    if (forUpdate) {
+      query.for('update');
+    }
+
+    const cartItemsList = await query;
+
+    return cartItemsList;
   }
 
   async updateCartItemById(
@@ -163,6 +179,15 @@ class CartService {
     const [cartItem] = await db.delete(cartItems).where(eq(cartItems.id, id)).returning();
 
     return cartItem;
+  }
+
+  async clearCart(cartId: number, ctx: QueryContext = db): Promise<CartItem[]> {
+    const deletedCartItems = await ctx
+      .delete(cartItems)
+      .where(eq(cartItems.cartId, cartId))
+      .returning();
+
+    return deletedCartItems;
   }
 }
 

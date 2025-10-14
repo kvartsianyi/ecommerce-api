@@ -1,4 +1,5 @@
-import { eq, ilike, lte, gte, count } from 'drizzle-orm';
+import { eq, ilike, lte, gte, count, SQL } from 'drizzle-orm';
+import { PgUpdateSetSource } from 'drizzle-orm/pg-core';
 
 import db from '@/db';
 import { products } from '@/db/schema';
@@ -140,6 +141,16 @@ class ProductService {
       .returning();
 
     return product;
+  }
+
+  async updateByParams(
+    productData: PgUpdateSetSource<typeof products>,
+    where: SQL | undefined,
+    ctx: QueryContext = db,
+  ): Promise<Product[]> {
+    const updatedProducts = await ctx.update(products).set(productData).where(where).returning();
+
+    return updatedProducts;
   }
 
   async deleteById(productId: number): Promise<Product> {
