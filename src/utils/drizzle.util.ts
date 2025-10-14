@@ -1,5 +1,5 @@
-import { and, asc, desc, SQL } from 'drizzle-orm';
-import { AnyPgColumn } from 'drizzle-orm/pg-core';
+import { and, asc, desc, DrizzleError, sql, SQL } from 'drizzle-orm';
+import { AnyPgColumn, PgColumn } from 'drizzle-orm/pg-core';
 
 import { FilterConfig, OrderByConfig, OrderByParams, OrderDirection } from '@/models';
 
@@ -28,4 +28,22 @@ export const buildOrderBy = <T extends string>(
   const columnConfig = config[column];
 
   return direction === OrderDirection.DESC ? desc(columnConfig) : asc(columnConfig);
+};
+
+export const jsonAgg = <T>(fields: Record<string, PgColumn>) => {
+  const chunks: SQL[] = [];
+  const entries = Object.entries(fields);
+
+  if (!entries.length) {
+    throw new DrizzleError({ message: 'Cannot aggregate an empty object' });
+  }
+
+  entries.forEach(([key, column], index) => {
+    if (index > 0) chunks.push(sql`,`);
+    chunks.push(sql.raw(`'${key}',`), sql`${column}`);
+  });
+
+  return sql<T>`
+      COALESCE(json_agg(json_build_object(${sql.join(chunks)})), '[]')
+    `;
 };

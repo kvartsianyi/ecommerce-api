@@ -18,6 +18,7 @@ export const errorHandlerMiddleware = (
       error: {
         message: err.message,
         code: err.statusCode,
+        details: err.details,
       },
     });
   } else if (err instanceof Joi.ValidationError) {
