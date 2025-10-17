@@ -5,10 +5,6 @@ export type Order = typeof orders.$inferSelect;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 
-export type OrderWithItems = typeof orders.$inferSelect & {
-  items: OrderItem[];
-};
-
 export interface OrderSummaryItem {
   id: number;
   createdAt: Date;

@@ -10,8 +10,17 @@ class OrderController {
 
     const order = await orderService.checkout(user.id);
 
-    return res.status(HttpStatusCode.CREATED).json(serializeResponse(order));
+    return res.status(HttpStatusCode.OK).json(serializeResponse(order));
   }
+
+  async getOrderById(req: Request, res: Response): Promise<Response> {
+    const orderId = parseInt(req.params.id);
+    const user = req.user!;
+
+    const order = await orderService.getOrderById(orderId, user.id);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(order));
+    }
 }
 
 export default new OrderController();

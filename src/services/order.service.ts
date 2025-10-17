@@ -2,7 +2,7 @@ import { eq, getTableColumns, sql } from 'drizzle-orm';
 
 import db from '@/db';
 import { cartItems, carts, orderItems, orders, products } from '@/db/schema';
-import { BadRequestException } from '@/exceptions';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@/exceptions';
 import cartService from './cart.service';
 import { ERROR_MESSAGES, OrderStatus } from '@/constants';
 import {
@@ -13,7 +13,6 @@ import {
   OrderItem,
   OrderSummary,
   OrderSummaryItem,
-  OrderWithItems,
   QueryContext,
 } from '@/models';
 import productService from './product.service';
@@ -76,15 +75,18 @@ class OrderService {
     return orderSummary!;
   }
 
-  async findOrderById(orderId: number): Promise<OrderWithItems | undefined> {
-    const order = await db.query.orders.findFirst({
-      where: eq(orders.id, orderId),
-      with: {
-        items: true,
-      },
-    });
+  async getOrderById(orderId: number, userId: number): Promise<OrderSummary | null> {
+    const orderSummary = await this.getOrderSummary(orderId);
 
-    return order;
+    if (!orderSummary) {
+      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
+    }
+
+    if (orderSummary.userId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    return orderSummary;
   }
 
   async createOrder(orderData: CreateOrder, ctx: QueryContext = db): Promise<Order> {

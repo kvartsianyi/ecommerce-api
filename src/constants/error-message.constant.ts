@@ -16,6 +16,7 @@ export const ERROR_MESSAGES = {
   CART_IS_EMPTY: 'Cart is empty',
   CART_ITEM_DOES_NOT_EXIST: 'Cart item does not exist',
   INSUFFICIENT_STOCK: 'Insufficient stock',
+  ORDER_DOES_NOT_EXIST: 'Order does not exist',
 } as const;
 
 export const MULTER_ERROR_CODE_MESSAGES: Partial<Record<multer.ErrorCode, string>> = {
