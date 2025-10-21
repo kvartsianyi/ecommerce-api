@@ -5,6 +5,15 @@ import { serializeResponse } from '@/utils';
 import { orderService } from '@/services';
 
 class OrderController {
+  async getOrders(req: Request, res: Response): Promise<Response> {
+    const orderFilters = req.query;
+    const user = req.user!;
+
+    const { data, ...paginationMeta } = await orderService.getOrders(user.id, orderFilters);
+
+    return res.status(HttpStatusCode.OK).json(serializeResponse(data, paginationMeta));
+  }
+
   async checkout(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 

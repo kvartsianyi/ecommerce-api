@@ -1,26 +1,70 @@
-import { and, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, count, eq, getTableColumns, sql } from 'drizzle-orm';
 
 import db from '@/db';
 import { cartItems, carts, orderItems, orders, payments, products } from '@/db/schema';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/exceptions';
 import cartService from './cart.service';
-import { ERROR_MESSAGES, OrderStatus, PaymentStatus } from '@/constants';
+import {
+  DEFAULT_ITEMS_PER_PAGE,
+  DEFAULT_PAGE_NUMBER,
+  ERROR_MESSAGES,
+  OrderStatus,
+  PaymentStatus,
+} from '@/constants';
 import {
   CartSummaryItem,
   CreateOrder,
   CreateOrderItem,
+  FilterConfig,
+  GetOrdersFilters,
   Order,
+  OrderByConfig,
+  OrderFilters,
   OrderItem,
+  OrderOrderByFields,
   OrderSummary,
   OrderSummaryItem,
+  PaginatedResult,
   QueryContext,
 } from '@/models';
 import productService from './product.service';
-import { jsonAgg } from '@/utils';
+import { buildOrderBy, buildWhere, calcOffset, calcTotalPages, jsonAgg } from '@/utils';
 import paymentService from './payment.service';
 import webhookService from './webhook.service';
 
 class OrderService {
+  async getOrders(userId: number, filters: GetOrdersFilters): Promise<PaginatedResult<Order>> {
+    const { page = DEFAULT_PAGE_NUMBER, perPage = DEFAULT_ITEMS_PER_PAGE } = filters;
+
+    const filterConfig: FilterConfig<OrderFilters> = {
+      status: value => eq(orders.status, value),
+    };
+    const orderByConfig: OrderByConfig<OrderOrderByFields> = {
+      _default: orders.createdAt,
+    };
+
+    const whereConditions = and(eq(orders.userId, userId), buildWhere(filters, filterConfig));
+    const orderByConditions = buildOrderBy(filters, orderByConfig);
+
+    const query = db
+      .select()
+      .from(orders)
+      .where(whereConditions)
+      .limit(perPage)
+      .offset(calcOffset(page, perPage))
+      .orderBy(orderByConditions);
+    const countQuery = db.select({ count: count() }).from(orders).where(whereConditions);
+
+    const [data, [{ count: totalCount }]] = await Promise.all([query, countQuery]);
+
+    return {
+      data,
+      page,
+      perPage,
+      totalPages: calcTotalPages(totalCount, perPage),
+    };
+  }
+
   async checkout(userId: number): Promise<OrderSummary> {
     const order = await db.transaction(async tx => {
       const cartItemsQuery = tx
