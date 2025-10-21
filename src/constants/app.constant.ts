@@ -13,6 +13,13 @@ export enum NodeEnv {
   PRODUCTION = 'production',
 }
 
+export enum LoggerContext {
+  BOOTSTRAP = 'Bootstrap',
+  CONFIG = 'Config',
+  ERROR_HANDLER = 'ErrorHandler',
+  STRIPE_WEBHOOK = 'StripeWebhook',
+}
+
 export enum TokenAction {
   USER_ACCESS_TOKEN = 'user-access-token',
   USER_REFRESH_TOKEN = 'user-refresh-token',

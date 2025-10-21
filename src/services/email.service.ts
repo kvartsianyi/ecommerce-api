@@ -7,6 +7,7 @@ import logger from '@/logger';
 import { ENV } from '@/config';
 import emailTemplates from '@/email-templates';
 import { EmailTemplateActions } from '@/models';
+import { LoggerContext } from '@/constants';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,9 +24,9 @@ export const transporter = nodemailer.createTransport({
 
 try {
   await transporter.verify();
-  logger.info('Mailer service connected successfully!', { context: 'Bootstrap' });
+  logger.info('Mailer service connected successfully!', { context: LoggerContext.BOOTSTRAP });
 } catch (error) {
-  logger.error('Mailer service connection failed!', { context: 'Bootstrap', error });
+  logger.error('Mailer service connection failed!', { context: LoggerContext.BOOTSTRAP, error });
 }
 
 class EmailService {
