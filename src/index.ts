@@ -8,12 +8,15 @@ import routes from '@/routes';
 import logger from '@/logger';
 import { ENV } from '@/config';
 import { notFoundMiddleware, errorHandlerMiddleware } from '@/middlewares';
-import { API_PREFIX, PUBLIC_ASSETS_ENDPOINT } from '@/constants';
+import { API_PREFIX, LoggerContext, PUBLIC_ASSETS_ENDPOINT } from '@/constants';
+import webhookRouter from './routes/webhook.router';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+app.use(`${API_PREFIX}/webhooks`, webhookRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,7 +29,7 @@ app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
 const server = app.listen(ENV.PORT, () =>
-  logger.info('Server is running on port %d', ENV.PORT, { context: 'Bootstrap' }),
+  logger.info('Server is running on port %d', ENV.PORT, { context: LoggerContext.BOOTSTRAP }),
 );
 
 const gracefulShutdown = (err?: Error | null) => server.close(() => process.exit(err ? 1 : 0));

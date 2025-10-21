@@ -1,13 +1,10 @@
 import { OrderStatus } from '@/constants';
 import { orderItems, orders } from '@/db/schema';
+import { OrderByParams, PaginationParams } from './api.model';
 
 export type Order = typeof orders.$inferSelect;
 
 export type OrderItem = typeof orderItems.$inferSelect;
-
-export type OrderWithItems = typeof orders.$inferSelect & {
-  items: OrderItem[];
-};
 
 export interface OrderSummaryItem {
   id: number;
@@ -43,3 +40,13 @@ export interface CreateOrderItem {
   quantity: number;
   unitPrice: number;
 }
+
+export interface OrderFilters {
+  status?: string;
+}
+
+export const ORDER_ORDER_BY_FIELDS = [] as const;
+
+export type OrderOrderByFields = (typeof ORDER_ORDER_BY_FIELDS)[number];
+
+export type GetOrdersFilters = OrderFilters & PaginationParams & OrderByParams<OrderOrderByFields>;

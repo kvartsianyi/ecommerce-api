@@ -46,8 +46,8 @@ CREATE TABLE "orders" (
 CREATE TABLE "payments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"order_id" integer NOT NULL,
-	"stripe_payment_id" integer NOT NULL,
-	"status" "payment_status" NOT NULL,
+	"stripe_payment_id" varchar(255) NOT NULL,
+	"status" "payment_status" DEFAULT 'unpaid' NOT NULL,
 	"amount" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,

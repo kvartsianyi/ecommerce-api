@@ -17,7 +17,9 @@ export type FilterConfig<T> = {
   [K in keyof T]?: (value: NonNullable<T[K]>) => SQL;
 };
 
-export type OrderByConfig<T extends string> = Record<T, AnyPgColumn>;
+export type OrderByConfig<T extends string> = {
+  _default: AnyPgColumn;
+} & Record<T, AnyPgColumn>;
 
 export interface PaginationParams {
   page?: number;

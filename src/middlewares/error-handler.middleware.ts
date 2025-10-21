@@ -3,7 +3,7 @@ import Joi from 'joi';
 
 import { ENV } from '@/config';
 import { HttpException } from '@/exceptions';
-import { HttpStatusCode, NodeEnv } from '@/constants';
+import { HttpStatusCode, LoggerContext, NodeEnv } from '@/constants';
 import logger from '@/logger';
 
 export const errorHandlerMiddleware = (
@@ -30,7 +30,7 @@ export const errorHandlerMiddleware = (
       },
     });
   } else {
-    logger.error('Unhandled error occurred', { context: 'ErrorHandler', error: err });
+    logger.error('Unhandled error occurred', { context: LoggerContext.ERROR_HANDLER, error: err });
     res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
       error: {
         message: 'Something went wrong!',

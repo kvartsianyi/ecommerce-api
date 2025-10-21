@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { users } from '@/db/schema';
 import { ENV } from '@/config';
 import logger from '@/logger';
-import { UserRole } from '@/constants';
+import { LoggerContext, UserRole } from '@/constants';
 
 const db = drizzle(ENV.DATABASE_URL);
 
@@ -17,9 +17,9 @@ try {
     isEmailConfirmed: true,
   });
 
-  logger.info('Database seeding completed successfully!', { context: 'Bootstrap' });
+  logger.info('Database seeding completed successfully!', { context: LoggerContext.BOOTSTRAP });
   process.exit(0);
 } catch (error) {
-  logger.error('Database seeding failed!', { context: 'Bootstrap', error });
+  logger.error('Database seeding failed!', { context: LoggerContext.BOOTSTRAP, error });
   process.exit(1);
 }

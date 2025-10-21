@@ -14,7 +14,11 @@ const validate =
         stripUnknown: true,
       });
 
-      Object.assign(req.params, value);
+      if (path === 'query') {
+        Object.defineProperty(req, 'query', { get: () => value });
+      } else {
+        Object.assign(req[path], value);
+      }
 
       next();
     } catch (e) {

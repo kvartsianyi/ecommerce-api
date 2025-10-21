@@ -2,7 +2,7 @@ import { SignOptions } from 'jsonwebtoken';
 import Joi from 'joi';
 
 import logger from '@/logger';
-import { NodeEnv, DEFAULT_PORT } from '@/constants';
+import { NodeEnv, DEFAULT_PORT, LoggerContext } from '@/constants';
 
 interface EnvConfig {
   NODE_ENV: NodeEnv;
@@ -23,6 +23,10 @@ interface EnvConfig {
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
+  STRIPE_PUBLIC_KEY: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET_KEY: string;
+  API_URL: string;
 }
 
 const schema = Joi.object<EnvConfig>({
@@ -47,6 +51,10 @@ const schema = Joi.object<EnvConfig>({
   CLOUDINARY_CLOUD_NAME: Joi.string().required(),
   CLOUDINARY_API_KEY: Joi.string().required(),
   CLOUDINARY_API_SECRET: Joi.string().required(),
+  STRIPE_PUBLIC_KEY: Joi.string().required(),
+  STRIPE_SECRET_KEY: Joi.string().required(),
+  STRIPE_WEBHOOK_SECRET_KEY: Joi.string().required(),
+  API_URL: Joi.string().uri().required(),
 });
 
 const { value: envConfig, error } = schema.validate(process.env, {
@@ -62,7 +70,7 @@ if (error) {
     errorObj[key] = message;
   }
 
-  logger.error('Config error:', errorObj, { context: 'Config' });
+  logger.error('Config error:', errorObj, { context: LoggerContext.CONFIG });
   process.exit(1);
 }
 

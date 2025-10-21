@@ -31,10 +31,11 @@ class ProductService {
     const orderByConfig: OrderByConfig<ProductOrderByFields> = {
       title: products.title,
       price: products.price,
+      _default: products.createdAt,
     };
 
     const whereConditions = buildWhere(filters, filterConfig);
-    const orderByConditions = buildOrderBy(filters, orderByConfig, products.createdAt);
+    const orderByConditions = buildOrderBy(filters, orderByConfig);
 
     const query = db
       .select()
