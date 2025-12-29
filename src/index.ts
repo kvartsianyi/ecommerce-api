@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import cors from 'cors';
 import '@/passport';
 
 import routes from '@/routes';
@@ -18,6 +19,7 @@ const app = express();
 
 app.use(`${API_PREFIX}/webhooks`, webhookRouter);
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
