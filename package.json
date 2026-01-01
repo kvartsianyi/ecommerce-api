@@ -1,5 +1,5 @@
 {
-  "name": "ecommerce-api",
+  "name": "pizza-house-api",
   "type": "module",
   "version": "1.0.0",
   "engines": {
@@ -21,7 +21,7 @@
   "license": "ISC",
   "description": "",
   "keywords": [
-    "ecommerce",
+    "pizza",
     "api"
   ],
   "dependencies": {
