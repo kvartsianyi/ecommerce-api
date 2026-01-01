@@ -52,11 +52,7 @@ class UserController {
     const user = req.user!;
     const publicUser = userService.toPublicUser(user);
 
-    return res.status(HttpStatusCode.OK).json(
-      serializeResponse({
-        user: publicUser,
-      }),
-    );
+    return res.status(HttpStatusCode.OK).json(serializeResponse(publicUser));
   }
 }
 
