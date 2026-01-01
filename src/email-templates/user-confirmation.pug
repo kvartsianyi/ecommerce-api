@@ -9,8 +9,8 @@ block content
             tr
               td(style="padding:10px; text-align:center;")
                 div(style="font-size:18px; line-height:140%")
-                  p Hello, #{fullName}. Welcome to the Ecommerce shop.
-                  p Please, click on the button below to confirm email.
+                  p Ласкаво просимо до Pizza House!
+                  p Будь ласка, натисніть кнопку нижче, щоб підтвердити вашу електронну пошту.
 
   include components/button.pug
-  +button(frontendUrl + '/email/confirm?token=' + token, 'Confirm Email')
+  +button(frontendUrl + '/email/confirm?token=' + token, 'Підтвердити email')

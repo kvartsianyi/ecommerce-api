@@ -14,7 +14,6 @@ class EmailNotificationService {
     const token = await jwtService.generateToken(payload, TokenAction.USER_CONFIRMATION_TOKEN);
 
     await emailService.sendEmail(user.email, TokenAction.USER_CONFIRMATION_TOKEN, {
-      fullName: `${user.firstName} ${user.lastName}`,
       token,
     });
   }
