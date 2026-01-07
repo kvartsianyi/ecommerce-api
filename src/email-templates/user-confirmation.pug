@@ -13,4 +13,4 @@ block content
                   p Будь ласка, натисніть кнопку нижче, щоб підтвердити вашу електронну пошту.
 
   include components/button.pug
-  +button(frontendUrl + '/email/confirm?token=' + token, 'Підтвердити email')
+  +button(frontendUrl + '/email-verification?token=' + token, 'Підтвердити')
