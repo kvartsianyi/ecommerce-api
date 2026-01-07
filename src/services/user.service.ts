@@ -4,8 +4,9 @@ import db from '@/db';
 import { users } from '@/db/schema';
 import bcryptService from './bcrypt.service';
 import { BadRequestException, NotFoundException } from '@/exceptions';
-import { ERROR_MESSAGES } from '@/constants';
-import { PublicUser, User } from '@/models';
+import { ERROR_MESSAGES, TokenAction, UserRole } from '@/constants';
+import { AuthTokenPairPayload, PublicUser, TokenPair, User } from '@/models';
+import jwtService from './jwt.service';
 
 type FindByIdOptions = { isPublic?: false } | { isPublic: true };
 
@@ -29,11 +30,12 @@ class UserService {
     return user;
   }
 
-  async confirmEmail(userId: number): Promise<PublicUser> {
+  async confirmEmail(userId: number): Promise<TokenPair> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: {
         id: true,
+        role: true,
         isEmailConfirmed: true,
       },
     });
@@ -56,7 +58,16 @@ class UserService {
       throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
     }
 
-    return updatedUser;
+    const payload: AuthTokenPairPayload = {
+      userId: user.id!,
+      role: user.role as UserRole,
+    };
+    const tokenPair = await jwtService.generateTokenPair(payload, {
+      accessTokenAction: TokenAction.USER_ACCESS_TOKEN,
+      refreshTokenAction: TokenAction.USER_REFRESH_TOKEN,
+    });
+
+    return tokenPair;
   }
 
   toPublicUser(user: User): PublicUser {
