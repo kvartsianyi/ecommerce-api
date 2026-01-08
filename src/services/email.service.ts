@@ -38,6 +38,7 @@ class EmailService {
     const { subject, templateFileName } = emailTemplates[action];
     const basicContext: pug.Options & pug.LocalsObject = {
       frontendUrl: ENV.FRONTEND_URL,
+      year: new Date().getFullYear(),
       cache: true,
     };
 
