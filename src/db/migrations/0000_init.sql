@@ -73,12 +73,15 @@ CREATE TABLE "users" (
 	"first_name" varchar(50) NOT NULL,
 	"last_name" varchar(50) NOT NULL,
 	"email" varchar(255) NOT NULL,
+	"phone" varchar(20) NOT NULL,
 	"password" varchar(255) NOT NULL,
 	"role" "user_role" DEFAULT 'user' NOT NULL,
 	"is_email_confirmed" boolean DEFAULT false,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "users_email_unique" UNIQUE("email")
+	CONSTRAINT "users_email_unique" UNIQUE("email"),
+	CONSTRAINT "users_phone_unique" UNIQUE("phone"),
+	CONSTRAINT "users_phone_check" CHECK (phone ~ '^\+380\d{9}$')
 );
 --> statement-breakpoint
 

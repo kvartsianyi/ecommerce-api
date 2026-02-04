@@ -3,6 +3,7 @@ import Joi from 'joi';
 import {
   DEFAULT_ITEMS_PER_PAGE,
   DEFAULT_PAGE_NUMBER,
+  REGEXP,
   USER_VALIDATION_CONDITIONS,
 } from '@/constants';
 import { OrderDirection } from '@/models';
@@ -11,6 +12,7 @@ const { PASSWORD } = USER_VALIDATION_CONDITIONS;
 
 export const NUMBER_ID_FIELD_SCHEMA = Joi.number().integer().min(0).required();
 export const EMAIL_FIELD_SCHEMA = Joi.string().email().required();
+export const PHONE_FIELD_SCHEMA = Joi.string().pattern(REGEXP.PHONE_NUMBER).required();
 export const PASSWORD_FIELD_SCHEMA = Joi.string().min(PASSWORD.MIN).max(PASSWORD.MAX).required();
 
 export const PAGINATION_FIELDS_SCHEMA = {
