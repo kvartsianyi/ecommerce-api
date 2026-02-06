@@ -13,7 +13,7 @@ import {
 } from '@/models';
 import { NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
-import productService from './product.service';
+import { ProductModel } from '@/db/models';
 
 class CartService {
   async addItemToCart(
@@ -22,7 +22,7 @@ class CartService {
   ): Promise<CartSummary> {
     const { productId } = cartItemData;
 
-    const product = await productService.findById(productId);
+    const product = await ProductModel.findById(productId);
 
     if (!product) {
       throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);

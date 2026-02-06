@@ -27,10 +27,10 @@ import {
   PaginatedResult,
   QueryContext,
 } from '@/models';
-import productService from './product.service';
 import { buildOrderBy, buildWhere, calcOffset, calcTotalPages, jsonAgg } from '@/utils';
 import paymentService from './payment.service';
 import webhookService from './webhook.service';
+import { ProductModel } from '@/db/models';
 
 class OrderService {
   async getOrders(userId: number, filters: GetOrdersFilters): Promise<PaginatedResult<Order>> {
@@ -97,11 +97,9 @@ class OrderService {
       }
 
       for (const item of cartDetails.items) {
-        await productService.updateByParams(
-          { stock: sql<number>`${products.stock} - ${item.quantity}` },
-          eq(products.id, item.productId),
-          tx,
-        );
+        await ProductModel.updateById(item.productId, {
+          stock: item.stock - item.quantity,
+        });
       }
 
       const newOrder: CreateOrder = {
