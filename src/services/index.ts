@@ -2,7 +2,6 @@ export { default as userService } from './user.service';
 export { default as emailService } from './email.service';
 export { default as emailNotificationService } from './email-notification.service';
 export { default as jwtService } from './jwt.service';
-export { default as bcryptService } from './bcrypt.service';
 export { default as cloudinaryService } from './cloudinary.service';
 export { default as productService } from './product.service';
 export { default as cartService } from './cart.service';
