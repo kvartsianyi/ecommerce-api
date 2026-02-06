@@ -59,9 +59,11 @@ class OrderService {
 
     return {
       data,
-      page,
-      perPage,
-      totalPages: calcTotalPages(totalCount, perPage),
+      meta: {
+        page,
+        perPage,
+        totalPages: calcTotalPages(totalCount, perPage),
+      },
     };
   }
 
