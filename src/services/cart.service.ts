@@ -28,7 +28,7 @@ class CartService {
       throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
-    const cart = await this.findOrCreateCart(userId);
+    const cart = await this.ensureCartExists(userId);
 
     const upsertCartItem: UpsertCartItem = {
       ...cartItemData,
@@ -85,7 +85,7 @@ class CartService {
     return cart;
   }
 
-  async findOrCreateCart(userId: number, ctx: QueryContext = db): Promise<Cart> {
+  async ensureCartExists(userId: number, ctx: QueryContext = db): Promise<Cart> {
     let cart = await this.findCart(userId, ctx);
 
     if (!cart) {
@@ -102,7 +102,7 @@ class CartService {
         'productId', ${products}.id,
         'title', ${products}.title,
         'price', ${products}.price,
-        'stock', ${products}.stock,
+        'picture', ${products}.picture,
         'quantity', ${cartItems}.quantity
       )) FILTER (WHERE ${cartItems}.id IS NOT NULL)`;
 
