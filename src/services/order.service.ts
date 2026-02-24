@@ -3,7 +3,6 @@ import { and, count, eq, getTableColumns, sql } from 'drizzle-orm';
 import db from '@/db';
 import { cartItems, carts, orderItems, orders, payments, products } from '@/db/schema';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/exceptions';
-import cartService from './cart.service';
 import {
   DEFAULT_ITEMS_PER_PAGE,
   DEFAULT_PAGE_NUMBER,
@@ -30,7 +29,7 @@ import {
 import { buildOrderBy, buildWhere, calcOffset, calcTotalPages, jsonAgg } from '@/utils';
 import paymentService from './payment.service';
 import webhookService from './webhook.service';
-import { ProductModel } from '@/db/models';
+import { CartModel, ProductModel } from '@/db/models';
 
 class OrderService {
   async getOrders(userId: number, filters: GetOrdersFilters): Promise<PaginatedResult<Order>> {
@@ -77,7 +76,7 @@ class OrderService {
         .where(eq(carts.userId, userId));
       await tx.execute(sql`${cartItemsQuery} for update of ${products}`);
 
-      const cartDetails = await cartService.getCartSummary(userId, tx);
+      const cartDetails = await CartModel.getCartSummary(userId); // TODO: Need to pass transaction context or use drizzle API instead here
 
       if (!cartDetails?.items?.length) {
         throw new BadRequestException(ERROR_MESSAGES.CART_IS_EMPTY);
@@ -111,7 +110,7 @@ class OrderService {
 
       await this.createOrderItems(order.id, cartDetails.items, tx);
 
-      await cartService.clearCart(cartDetails.id, tx);
+      await CartModel.clear(cartDetails.id); // TODO: Need to pass transaction context or use drizzle API instead here
 
       return order;
     });
