@@ -48,11 +48,15 @@ class ProductService {
 
     const [data, [{ count: totalCount }]] = await Promise.all([query, countQuery]);
 
-    return {
-      data,
+    const meta = {
       page,
       perPage,
       totalPages: calcTotalPages(totalCount, perPage),
+    };
+
+    return {
+      data,
+      meta,
     };
   }
 
