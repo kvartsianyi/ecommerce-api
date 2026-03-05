@@ -8,9 +8,11 @@ export enum OrderDirection {
 
 export interface PaginatedResult<T> {
   data: T[];
-  page: number;
-  perPage: number;
-  totalPages: number;
+  meta: {
+    page: number;
+    perPage: number;
+    totalPages: number;
+  };
 }
 
 export type FilterConfig<T> = {
