@@ -10,13 +10,13 @@ import db from '..';
 export class UserModel extends BaseModel {
   static async findById(id: number) {
     return db.query.users.findFirst({
-      where: eq(users.id, id),
+      where: { id },
     });
   }
 
   static async findByEmail(email: string) {
     return db.query.users.findFirst({
-      where: eq(users.email, email),
+      where: { email },
     });
   }
 

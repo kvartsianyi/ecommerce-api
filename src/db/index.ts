@@ -1,12 +1,13 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 
-import * as schema from './schema';
 import { ENV } from '@/config';
 import logger from '@/logger';
 import { LoggerContext } from '@/constants';
+import { relations } from './relations';
 
 const db = drizzle(ENV.DATABASE_URL, {
-  schema,
+  relations,
+  logger: process.stdout.isTTY,
 });
 
 try {

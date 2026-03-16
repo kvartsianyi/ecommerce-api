@@ -1,10 +1,8 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { serial, pgTable, timestamp, integer, pgEnum, check } from 'drizzle-orm/pg-core';
 
 import users from './user.schema';
 import { OrderStatus } from '@/constants';
-import orderItems from './order-items.schema';
-import payments from './payments.schema';
 
 const orderStatus = Object.values(OrderStatus) as [string, ...string[]];
 
@@ -24,14 +22,5 @@ const orders = pgTable(
   },
   table => [check('orders_total_amount_check', sql`${table.totalAmount} >= 0`)],
 );
-
-export const orderRelations = relations(orders, ({ one, many }) => ({
-  items: many(orderItems),
-  user: one(users),
-  payment: one(payments, {
-    fields: [orders.id],
-    references: [payments.orderId],
-  }),
-}));
 
 export default orders;

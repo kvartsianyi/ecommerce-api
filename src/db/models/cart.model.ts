@@ -1,21 +1,19 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { cartItems, carts, products } from '../schema';
+import { cartItems, carts } from '../schema';
 import { BaseModel } from './base.model';
-import { CartSummaryItem } from '@/models';
-import { jsonAgg } from '@/utils';
 import db from '..';
 
 export class CartModel extends BaseModel {
   static async findById(id: number) {
     return db.query.carts.findFirst({
-      where: eq(carts.id, id),
+      where: { id },
     });
   }
 
   static async findByUserId(userId: number) {
     return db.query.carts.findFirst({
-      where: eq(carts.userId, userId),
+      where: { userId },
     });
   }
 
@@ -44,26 +42,21 @@ export class CartModel extends BaseModel {
     return cart;
   }
 
-  static async getCartSummary(userId: number) {
-    const [cartSummary] = await db
-      .select({
-        id: carts.id,
-        totalAmount: sql<number>`COALESCE(SUM(${cartItems.quantity} * ${products.price})::int, 0)`,
-        items: jsonAgg<CartSummaryItem[]>({
-          id: cartItems.id,
-          productId: products.id,
-          title: products.title,
-          price: products.price,
-          stock: products.stock,
-          quantity: cartItems.quantity,
-        }),
-      })
-      .from(carts)
-      .leftJoin(cartItems, eq(cartItems.cartId, carts.id))
-      .leftJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(carts.userId, userId))
-      .groupBy(carts.id);
-
-    return cartSummary ?? null;
+  static getCartDetails(userId: number) {
+    return db.query.carts.findFirst({
+      where: {
+        userId,
+      },
+      with: {
+        items: {
+          orderBy: {
+            id: 'asc',
+          },
+          with: {
+            product: true,
+          },
+        },
+      },
+    });
   }
 }

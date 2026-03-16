@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { serial, pgTable, timestamp, integer, check, unique } from 'drizzle-orm/pg-core';
 
 import products from './product.schema';
@@ -23,16 +23,5 @@ const cartItems = pgTable(
     unique('cart_items_cart_id_product_id_unique').on(table.cartId, table.productId),
   ],
 );
-
-export const cartItemsRelations = relations(cartItems, ({ one }) => ({
-  cart: one(carts, {
-    fields: [cartItems.cartId],
-    references: [carts.id],
-  }),
-  product: one(products, {
-    fields: [cartItems.productId],
-    references: [products.id],
-  }),
-}));
 
 export default cartItems;

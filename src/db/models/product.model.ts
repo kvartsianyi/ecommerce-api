@@ -9,7 +9,7 @@ import { calcOffset } from '@/utils';
 export class ProductModel extends BaseModel {
   static async findById(id: number) {
     return db.query.products.findFirst({
-      where: eq(products.id, id),
+      where: { id },
     });
   }
 

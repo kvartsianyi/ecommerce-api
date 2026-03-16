@@ -8,7 +8,7 @@ class CartController {
   async getUserCart(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 
-    const cart = await cartService.getCartSummary(user.id);
+    const cart = await cartService.getCartDetails(user.id);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
   }
