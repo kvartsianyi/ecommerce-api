@@ -56,13 +56,15 @@ class OrderService {
 
     const [data, [{ count: totalCount }]] = await Promise.all([query, countQuery]);
 
+    const meta = {
+      page,
+      perPage,
+      totalPages: calcTotalPages(totalCount, perPage),
+    };
+
     return {
       data,
-      meta: {
-        page,
-        perPage,
-        totalPages: calcTotalPages(totalCount, perPage),
-      },
+      meta,
     };
   }
 

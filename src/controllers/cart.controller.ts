@@ -8,6 +8,8 @@ class CartController {
   async getUserCart(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 
+    await cartService.ensureCartExists(user.id);
+
     const cart = await cartService.getCartDetails(user.id);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(cart));

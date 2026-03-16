@@ -1,4 +1,4 @@
-import { CartItem, UpsertCartItem, CartDetails, CartDetailsItem } from '@/models';
+import { CartItem, UpsertCartItem, CartDetails, CartDetailsItem, Cart } from '@/models';
 import { NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
 import { CartItemModel, CartModel, ProductModel } from '@/db/models';
@@ -40,7 +40,7 @@ class CartService {
       throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
-    const cart = await CartModel.findOrCreateCart(userId);
+    const cart = await this.ensureCartExists(userId);
 
     const upsertCartItem: UpsertCartItem = {
       ...cartItemData,
@@ -81,6 +81,10 @@ class CartService {
     const deletedCartItem = await CartItemModel.deleteById(cartItem.id);
 
     return deletedCartItem;
+  }
+
+  async ensureCartExists(userId: number): Promise<Cart> {
+    return CartModel.ensureCartExists(userId);
   }
 }
 

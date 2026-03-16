@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { cartItems, carts } from '../schema';
+import { Cart } from '@/models';
 import { BaseModel } from './base.model';
 import db from '..';
 
@@ -32,7 +33,7 @@ export class CartModel extends BaseModel {
     return deletedCartItems;
   }
 
-  static async findOrCreateCart(userId: number) {
+  static async ensureCartExists(userId: number): Promise<Cart> {
     let cart = await CartModel.findByUserId(userId);
 
     if (!cart) {
@@ -42,7 +43,7 @@ export class CartModel extends BaseModel {
     return cart;
   }
 
-  static getCartDetails(userId: number) {
+  static async getCartDetails(userId: number) {
     return db.query.carts.findFirst({
       where: {
         userId,
