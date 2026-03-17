@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   serial,
   pgTable,
@@ -33,12 +33,5 @@ const products = pgTable(
     index('products_title_idx').on(table.title),
   ],
 );
-
-export const productRelations = relations(products, ({ one }) => ({
-  user: one(users, {
-    fields: [products.userId],
-    references: [users.id],
-  }),
-}));
 
 export default products;

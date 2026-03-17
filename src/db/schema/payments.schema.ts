@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { serial, pgTable, timestamp, integer, check, pgEnum, varchar } from 'drizzle-orm/pg-core';
 
 import orders from './order.schema';
@@ -23,9 +23,5 @@ const payments = pgTable(
   },
   table => [check('payments_amount_check', sql`${table.amount} >= 0`)],
 );
-
-export const paymentRelations = relations(payments, ({ one }) => ({
-  order: one(orders),
-}));
 
 export default payments;

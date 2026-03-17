@@ -1,44 +1,24 @@
-import { eq, getTableColumns } from 'drizzle-orm';
-
-import db from '@/db';
-import { users } from '@/db/schema';
-import bcryptService from './bcrypt.service';
 import { BadRequestException, NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES, TokenAction, UserRole } from '@/constants';
 import { AuthTokenPairPayload, PublicUser, TokenPair, User } from '@/models';
 import jwtService from './jwt.service';
-
-type FindByIdOptions = { isPublic?: false } | { isPublic: true };
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { password, ...publicUserFields } = getTableColumns(users);
+import { UserModel } from '@/db/models';
 
 class UserService {
   async createUser(userData: User): Promise<PublicUser> {
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, userData.email),
-    });
+    const existingUser = await UserModel.findByEmail(userData.email);
 
     if (existingUser) {
       throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXIST);
     }
 
-    userData.password = await bcryptService.hashPassword(userData.password);
+    const user = await UserModel.create(userData);
 
-    const [user] = await db.insert(users).values(userData).returning(publicUserFields);
-
-    return user;
+    return this.toPublicUser(user);
   }
 
   async confirmEmail(userId: number): Promise<TokenPair> {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: {
-        id: true,
-        role: true,
-        isEmailConfirmed: true,
-      },
-    });
+    const user = await UserModel.findById(userId);
 
     if (!user) {
       throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
@@ -48,15 +28,7 @@ class UserService {
       throw new BadRequestException(ERROR_MESSAGES.EMAIL_ALREADY_CONFIRMED);
     }
 
-    const [updatedUser] = await db
-      .update(users)
-      .set({ isEmailConfirmed: true })
-      .where(eq(users.id, userId))
-      .returning(publicUserFields);
-
-    if (!updatedUser) {
-      throw new NotFoundException(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
-    }
+    await UserModel.updateById(userId, { isEmailConfirmed: true });
 
     const payload: AuthTokenPairPayload = {
       userId: user.id!,
@@ -75,27 +47,6 @@ class UserService {
     const { password, ...publicUser } = user;
 
     return publicUser;
-  }
-
-  async findById<T extends FindByIdOptions>(
-    id: number,
-    options?: T,
-  ): Promise<T extends { isPublic: true } ? PublicUser | undefined : User | undefined> {
-    const isPublic = options?.isPublic ?? false;
-    const publicFields = Object.fromEntries(Object.keys(publicUserFields).map(key => [key, true]));
-
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, id),
-      ...(isPublic ? { columns: publicFields } : {}),
-    });
-
-    return user;
-  }
-
-  async findByEmail(email: string): Promise<User | undefined> {
-    return db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
   }
 }
 

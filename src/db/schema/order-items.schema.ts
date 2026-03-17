@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { serial, pgTable, timestamp, integer, check } from 'drizzle-orm/pg-core';
 
 import orders from './order.schema';
@@ -24,16 +24,5 @@ const orderItems = pgTable(
     check('order_items_unit_price_check', sql`${table.unitPrice} >= 0`),
   ],
 );
-
-export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, {
-    fields: [orderItems.orderId],
-    references: [orders.id],
-  }),
-  product: one(products, {
-    fields: [orderItems.productId],
-    references: [products.id],
-  }),
-}));
 
 export default orderItems;

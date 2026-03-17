@@ -10,7 +10,7 @@ class CartController {
 
     await cartService.ensureCartExists(user.id);
 
-    const cart = await cartService.getCartSummary(user.id);
+    const cart = await cartService.getCartDetails(user.id);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(cart));
   }

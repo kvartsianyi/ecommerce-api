@@ -10,18 +10,17 @@ export interface UpsertCartItem {
   quantity: number;
 }
 
-export interface CartSummaryItem {
+export interface CartDetailsItem {
   id: number;
   productId: number;
   title: string;
   price: number;
   quantity: number;
-  stock: number;
-  picture: string;
+  picture: string | null;
 }
 
-export interface CartSummary {
+export interface CartDetails {
   id: number;
   totalAmount: number;
-  items: CartSummaryItem[];
+  items: CartDetailsItem[];
 }

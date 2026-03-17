@@ -1,28 +1,40 @@
-import { and, eq, getTableColumns, sql } from 'drizzle-orm';
-
-import db from '@/db';
-import { cartItems, carts, products } from '@/db/schema';
-import {
-  Cart,
-  CartItem,
-  UpsertCartItem,
-  CartSummary,
-  CartSummaryItem,
-  QueryContext,
-  FindOptions,
-} from '@/models';
+import { CartItem, UpsertCartItem, CartDetails, CartDetailsItem, Cart } from '@/models';
 import { NotFoundException } from '@/exceptions';
 import { ERROR_MESSAGES } from '@/constants';
-import productService from './product.service';
+import { CartItemModel, CartModel, ProductModel } from '@/db/models';
 
 class CartService {
+  async getCartDetails(userId: number): Promise<CartDetails | null> {
+    const cartDetails = await CartModel.getCartDetails(userId);
+
+    if (!cartDetails) {
+      return null;
+    }
+
+    const items: CartDetailsItem[] = cartDetails.items.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      productId: item.product!.id,
+      title: item.product!.title,
+      picture: item.product!.picture,
+      price: item.product!.price,
+    }));
+    const totalAmount = items.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
+
+    return {
+      id: cartDetails.id,
+      items,
+      totalAmount,
+    };
+  }
+
   async addItemToCart(
     userId: number,
     cartItemData: Omit<UpsertCartItem, 'cartId'>,
-  ): Promise<CartSummary> {
+  ): Promise<CartDetails> {
     const { productId } = cartItemData;
 
-    const product = await productService.findById(productId);
+    const product = await ProductModel.findById(productId);
 
     if (!product) {
       throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
@@ -34,160 +46,45 @@ class CartService {
       ...cartItemData,
       cartId: cart.id,
     };
-    await this.upsertCartItem(upsertCartItem);
+    await CartItemModel.upsertCartItem(upsertCartItem);
 
-    const cartSummary = await this.getCartSummary(userId);
+    const cartDetails = await this.getCartDetails(userId);
 
-    return cartSummary!;
+    return cartDetails!;
   }
 
   async updateCartItem(
     userId: number,
     id: number,
     cartItemData: Pick<CartItem, 'quantity'>,
-  ): Promise<CartSummary> {
-    const cartItem = await this.findCartItemByUser(userId, id);
+  ): Promise<CartDetails> {
+    const cartItem = await CartItemModel.findByIdAndUserId(id, userId);
 
     if (!cartItem) {
       throw new NotFoundException(ERROR_MESSAGES.CART_ITEM_DOES_NOT_EXIST);
     }
 
-    await this.updateCartItemById(id, cartItemData);
+    await CartItemModel.updateById(id, cartItemData);
 
-    const cartSummary = await this.getCartSummary(userId);
+    const cartDetails = await this.getCartDetails(userId);
 
-    return cartSummary!;
+    return cartDetails!;
   }
 
   async deleteCartItem(userId: number, id: number): Promise<CartItem> {
-    const cartItem = await this.findCartItemByUser(userId, id);
+    const cartItem = await CartItemModel.findByIdAndUserId(id, userId);
 
     if (!cartItem) {
       throw new NotFoundException(ERROR_MESSAGES.CART_ITEM_DOES_NOT_EXIST);
     }
 
-    const deletedCartItem = await this.deleteCartItemById(cartItem.id);
+    const deletedCartItem = await CartItemModel.deleteById(cartItem.id);
 
     return deletedCartItem;
   }
 
-  async findCart(userId: number, ctx: QueryContext = db): Promise<Cart | undefined> {
-    const cart = await ctx.query.carts.findFirst({
-      where: eq(carts.userId, userId),
-    });
-
-    return cart;
-  }
-
-  async createCart(userId: number, ctx: QueryContext = db): Promise<Cart> {
-    const [cart] = await ctx.insert(carts).values({ userId }).returning();
-
-    return cart;
-  }
-
-  async ensureCartExists(userId: number, ctx: QueryContext = db): Promise<Cart> {
-    let cart = await this.findCart(userId, ctx);
-
-    if (!cart) {
-      cart = await this.createCart(userId, ctx);
-    }
-
-    return cart;
-  }
-
-  async getCartSummary(userId: number, ctx: QueryContext = db): Promise<CartSummary | null> {
-    const cartItemFields = sql<CartSummaryItem[]>`
-      json_agg(json_build_object(
-        'id', ${cartItems}.id,
-        'productId', ${products}.id,
-        'title', ${products}.title,
-        'price', ${products}.price,
-        'picture', ${products}.picture,
-        'quantity', ${cartItems}.quantity
-      )) FILTER (WHERE ${cartItems}.id IS NOT NULL)`;
-
-    const [cartSummary] = await ctx
-      .select({
-        id: carts.id,
-        totalAmount: sql<number>`COALESCE(SUM(${cartItems.quantity} * ${products.price})::int, 0)`,
-        items: sql<CartSummaryItem[]>`COALESCE(${cartItemFields}, '[]'::json)`,
-      })
-      .from(carts)
-      .leftJoin(cartItems, eq(cartItems.cartId, carts.id))
-      .leftJoin(products, eq(cartItems.productId, products.id))
-      .where(eq(carts.userId, userId))
-      .groupBy(carts.id);
-
-    return cartSummary ?? null;
-  }
-
-  async findCartItemByUser(userId: number, cartItemId: number): Promise<CartItem | undefined> {
-    const [cartItem] = await db
-      .select(getTableColumns(cartItems))
-      .from(cartItems)
-      .innerJoin(carts, eq(cartItems.cartId, carts.id))
-      .where(and(eq(cartItems.id, cartItemId), eq(carts.userId, userId)));
-
-    return cartItem;
-  }
-
-  async findCartItemsByCartId(
-    cartId: number,
-    { ctx = db, forUpdate = false }: FindOptions = {},
-  ): Promise<CartItem[]> {
-    const query = ctx.select().from(cartItems).where(eq(cartItems.cartId, cartId));
-
-    if (forUpdate) {
-      query.for('update');
-    }
-
-    const cartItemsList = await query;
-
-    return cartItemsList;
-  }
-
-  async updateCartItemById(
-    id: number,
-    cartItemData: Partial<CartItem>,
-    ctx: QueryContext = db,
-  ): Promise<CartItem> {
-    const [cartItem] = await ctx
-      .update(cartItems)
-      .set(cartItemData)
-      .where(eq(cartItems.id, id))
-      .returning();
-
-    return cartItem;
-  }
-
-  async upsertCartItem(cartItemData: UpsertCartItem, ctx: QueryContext = db): Promise<CartItem> {
-    const [cartItem] = await ctx
-      .insert(cartItems)
-      .values(cartItemData)
-      .onConflictDoUpdate({
-        target: [cartItems.cartId, cartItems.productId],
-        set: {
-          quantity: sql<number>`${cartItems.quantity} + ${cartItemData.quantity}`,
-        },
-      })
-      .returning();
-
-    return cartItem;
-  }
-
-  async deleteCartItemById(id: number): Promise<CartItem> {
-    const [cartItem] = await db.delete(cartItems).where(eq(cartItems.id, id)).returning();
-
-    return cartItem;
-  }
-
-  async clearCart(cartId: number, ctx: QueryContext = db): Promise<CartItem[]> {
-    const deletedCartItems = await ctx
-      .delete(cartItems)
-      .where(eq(cartItems.cartId, cartId))
-      .returning();
-
-    return deletedCartItems;
+  async ensureCartExists(userId: number): Promise<Cart> {
+    return CartModel.ensureCartExists(userId);
   }
 }
 

@@ -1,9 +1,9 @@
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 
-import { userService } from '@/services';
 import { AuthTokenPairPayload } from '@/models';
 import { ERROR_MESSAGES } from '@/constants';
 import { ForbiddenException, UnauthorizedException } from '@/exceptions';
+import { UserModel } from '@/db/models';
 
 const jwtTokenStrategy = (secretOrKey: string | Buffer<ArrayBufferLike>) =>
   new JwtStrategy(
@@ -13,7 +13,7 @@ const jwtTokenStrategy = (secretOrKey: string | Buffer<ArrayBufferLike>) =>
     },
     async (payload: AuthTokenPairPayload, done) => {
       try {
-        const user = await userService.findById(payload.userId);
+        const user = await UserModel.findById(payload.userId);
 
         if (!user)
           return done(new UnauthorizedException(ERROR_MESSAGES.TOKEN_INVALID_OR_EXPIRED), false);
