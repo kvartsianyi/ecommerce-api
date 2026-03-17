@@ -1,7 +1,7 @@
-import { and, count, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import db from '@/db';
-import { cartItems, carts, orderItems, orders, payments, products } from '@/db/schema';
+import { orders } from '@/db/schema';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/exceptions';
 import {
   DEFAULT_ITEMS_PER_PAGE,
@@ -11,7 +11,6 @@ import {
   PaymentStatus,
 } from '@/constants';
 import {
-  CartSummaryItem,
   CreateOrder,
   CreateOrderItem,
   FilterConfig,
@@ -19,17 +18,18 @@ import {
   Order,
   OrderByConfig,
   OrderFilters,
-  OrderItem,
   OrderOrderByFields,
-  OrderSummary,
-  OrderSummaryItem,
+  OrderDetails,
+  OrderDetailsItem,
   PaginatedResult,
-  QueryContext,
 } from '@/models';
-import { buildOrderBy, buildWhere, calcOffset, calcTotalPages, jsonAgg } from '@/utils';
+import { buildOrderBy, buildWhere, calcTotalPages } from '@/utils';
+import { CartModel, OrderItemModel, OrderModel, PaymentModel } from '@/db/models';
+import cartService from './cart.service';
 import paymentService from './payment.service';
 import webhookService from './webhook.service';
-import { CartModel, ProductModel } from '@/db/models';
+
+// TODO: Implement AsyncLocalStorage transaction context for models and util withTransaction
 
 class OrderService {
   async getOrders(userId: number, filters: GetOrdersFilters): Promise<PaginatedResult<Order>> {
@@ -45,16 +45,15 @@ class OrderService {
     const whereConditions = and(eq(orders.userId, userId), buildWhere(filters, filterConfig));
     const orderByConditions = buildOrderBy(filters, orderByConfig);
 
-    const query = db
-      .select()
-      .from(orders)
-      .where(whereConditions)
-      .limit(perPage)
-      .offset(calcOffset(page, perPage))
-      .orderBy(orderByConditions);
-    const countQuery = db.select({ count: count() }).from(orders).where(whereConditions);
+    const listQuery = OrderModel.list({
+      whereConditions,
+      orderByConditions,
+      page,
+      perPage,
+    });
+    const countQuery = OrderModel.count(whereConditions);
 
-    const [data, [{ count: totalCount }]] = await Promise.all([query, countQuery]);
+    const [data, totalCount] = await Promise.all([listQuery, countQuery]);
 
     const meta = {
       page,
@@ -68,39 +67,12 @@ class OrderService {
     };
   }
 
-  async checkout(userId: number): Promise<OrderSummary> {
+  async checkout(userId: number): Promise<OrderDetails> {
     const order = await db.transaction(async tx => {
-      const cartItemsQuery = tx
-        .select({ id: cartItems.id })
-        .from(cartItems)
-        .innerJoin(products, eq(cartItems.productId, products.id))
-        .innerJoin(carts, eq(cartItems.cartId, carts.id))
-        .where(eq(carts.userId, userId));
-      await tx.execute(sql`${cartItemsQuery} for update of ${products}`);
-
-      const cartDetails = await CartModel.getCartSummary(userId); // TODO: Need to pass transaction context or use drizzle API instead here
+      const cartDetails = await cartService.getCartDetails(userId); // TODO: Need to pass transaction context or use drizzle API instead here
 
       if (!cartDetails?.items?.length) {
         throw new BadRequestException(ERROR_MESSAGES.CART_IS_EMPTY);
-      }
-
-      const insufficientStockProducts = cartDetails.items.filter(
-        item => item.quantity > item.stock,
-      );
-
-      if (insufficientStockProducts.length) {
-        const details = insufficientStockProducts.map(item => ({
-          productId: item.productId,
-          requestedQuantity: item.quantity,
-          availableStock: item.stock,
-        }));
-        throw new BadRequestException(ERROR_MESSAGES.INSUFFICIENT_STOCK, details);
-      }
-
-      for (const item of cartDetails.items) {
-        await ProductModel.updateById(item.productId, {
-          stock: item.stock - item.quantity,
-        });
       }
 
       const newOrder: CreateOrder = {
@@ -108,37 +80,46 @@ class OrderService {
         status: OrderStatus.PENDING,
         totalAmount: cartDetails.totalAmount,
       };
-      const order = await this.createOrder(newOrder, tx);
+      const order = await OrderModel.create(newOrder, tx);
 
-      await this.createOrderItems(order.id, cartDetails.items, tx);
+      const orderItemsToInsert: CreateOrderItem[] = cartDetails.items.map(item => ({
+        orderId: order.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      }));
+      await OrderItemModel.createMany(orderItemsToInsert, tx);
 
       await CartModel.clear(cartDetails.id); // TODO: Need to pass transaction context or use drizzle API instead here
 
       return order;
     });
 
-    const orderSummary = await this.getOrderSummary(order.id);
+    const orderDetails = await this.getOrderDetails(order.id);
 
-    return orderSummary!;
+    return orderDetails!;
   }
 
-  async getOrderById(orderId: number, userId: number): Promise<OrderSummary | null> {
-    const orderSummary = await this.getOrderSummary(orderId);
+  async getOrderById(orderId: number, userId: number): Promise<OrderDetails | null> {
+    const orderDetails = await this.getOrderDetails(orderId);
 
-    if (!orderSummary) {
+    if (!orderDetails) {
       throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
     }
 
-    if (orderSummary.userId !== userId) {
+    if (orderDetails.userId !== userId) {
       throw new ForbiddenException();
     }
 
-    return orderSummary;
+    return orderDetails;
   }
 
   async payOrder(orderId: number, userId: number): Promise<string> {
     const order = await db.query.orders.findFirst({
-      where: and(eq(orders.id, orderId), eq(orders.userId, userId)),
+      where: {
+        id: orderId,
+        userId,
+      },
       with: { payment: true },
     });
 
@@ -167,7 +148,7 @@ class OrderService {
 
   async markOrderPaid(orderId: number): Promise<void> {
     const order = await db.query.orders.findFirst({
-      where: eq(orders.id, orderId),
+      where: { id: orderId },
       with: { payment: true },
     });
 
@@ -178,82 +159,34 @@ class OrderService {
     if (order?.payment?.status === PaymentStatus.PAID) return;
 
     await db.transaction(async tx => {
-      await this.updateOrderById(orderId, { status: PaymentStatus.PAID }, tx);
-      await tx
-        .update(payments)
-        .set({ status: PaymentStatus.PAID })
-        .where(eq(payments.orderId, orderId));
+      await OrderModel.updateById(orderId, { status: PaymentStatus.PAID }, tx);
+      await PaymentModel.updateByOrderId(orderId, { status: PaymentStatus.PAID }, tx);
     });
   }
 
-  async createOrder(orderData: CreateOrder, ctx: QueryContext = db): Promise<Order> {
-    const [order] = await ctx.insert(orders).values(orderData).returning();
+  async getOrderDetails(orderId: number): Promise<OrderDetails | null> {
+    const orderDetails = await OrderModel.getOrderDetails(orderId);
 
-    return order;
-  }
+    if (!orderDetails) {
+      return null;
+    }
 
-  async findOrderById(orderId: number): Promise<Order> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
-
-    return order;
-  }
-
-  async updateOrderById(
-    orderId: number,
-    orderData: Partial<Order>,
-    ctx: QueryContext = db,
-  ): Promise<Order> {
-    const [order] = await ctx
-      .update(orders)
-      .set(orderData)
-      .where(eq(orders.id, orderId))
-      .returning();
-
-    return order;
-  }
-
-  async createOrderItems(
-    orderId: number,
-    cartItems: CartSummaryItem[],
-    ctx: QueryContext = db,
-  ): Promise<OrderItem[]> {
-    const orderItemsToInsert: CreateOrderItem[] = cartItems.map(item => ({
-      orderId: orderId,
+    const items: OrderDetailsItem[] = orderDetails.items.map(item => ({
+      id: item.id,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      orderId: item.orderId,
       productId: item.productId,
       quantity: item.quantity,
-      unitPrice: item.price,
+      unitPrice: item.unitPrice,
+      title: item.product!.title,
+      picture: item.product!.picture,
     }));
 
-    const createdOrderItems = await ctx.insert(orderItems).values(orderItemsToInsert).returning();
-
-    return createdOrderItems;
-  }
-
-  async getOrderSummary(orderId: number): Promise<OrderSummary | null> {
-    const itemFields = {
-      id: orderItems.id,
-      orderId: orderItems.orderId,
-      productId: products.id,
-      quantity: orderItems.quantity,
-      unitPrice: orderItems.unitPrice,
-      createdAt: orderItems.createdAt,
-      updatedAt: orderItems.updatedAt,
-      title: products.title,
-      picture: products.picture,
+    return {
+      ...orderDetails,
+      items,
     };
-
-    const [orderSummary] = await db
-      .select({
-        ...getTableColumns(orders),
-        items: jsonAgg<OrderSummaryItem[]>(itemFields),
-      })
-      .from(orders)
-      .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
-      .leftJoin(products, eq(orderItems.productId, products.id))
-      .where(eq(orders.id, orderId))
-      .groupBy(orders.id);
-
-    return orderSummary ?? null;
   }
 }
 

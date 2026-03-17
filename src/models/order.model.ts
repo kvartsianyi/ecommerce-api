@@ -6,7 +6,7 @@ export type Order = typeof orders.$inferSelect;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 
-export interface OrderSummaryItem {
+export interface OrderDetailsItem {
   id: number;
   createdAt: Date;
   updatedAt: Date;
@@ -15,17 +15,17 @@ export interface OrderSummaryItem {
   quantity: number;
   unitPrice: number;
   title: string;
-  picture: string;
+  picture: string | null;
 }
 
-export interface OrderSummary {
+export interface OrderDetails {
   id: number;
   userId: number;
   status: string;
   totalAmount: number;
   createdAt: Date;
   updatedAt: Date;
-  items: OrderSummaryItem[];
+  items: OrderDetailsItem[];
 }
 
 export interface CreateOrder {
