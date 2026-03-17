@@ -11,7 +11,6 @@ import {
   PaymentStatus,
 } from '@/constants';
 import {
-  CreateOrder,
   CreateOrderItem,
   FilterConfig,
   GetOrdersFilters,
@@ -28,8 +27,7 @@ import { CartModel, OrderItemModel, OrderModel, PaymentModel } from '@/db/models
 import cartService from './cart.service';
 import paymentService from './payment.service';
 import webhookService from './webhook.service';
-
-// TODO: Implement AsyncLocalStorage transaction context for models and util withTransaction
+import { withTransaction } from '@/db/transaction';
 
 class OrderService {
   async getOrders(userId: number, filters: GetOrdersFilters): Promise<PaginatedResult<Order>> {
@@ -68,19 +66,18 @@ class OrderService {
   }
 
   async checkout(userId: number): Promise<OrderDetails> {
-    const order = await db.transaction(async tx => {
-      const cartDetails = await cartService.getCartDetails(userId); // TODO: Need to pass transaction context or use drizzle API instead here
+    const orderId = await withTransaction<number>(async () => {
+      const cartDetails = await cartService.getCartDetails(userId);
 
       if (!cartDetails?.items?.length) {
         throw new BadRequestException(ERROR_MESSAGES.CART_IS_EMPTY);
       }
 
-      const newOrder: CreateOrder = {
+      const order = await OrderModel.create({
         userId,
         status: OrderStatus.PENDING,
         totalAmount: cartDetails.totalAmount,
-      };
-      const order = await OrderModel.create(newOrder, tx);
+      });
 
       const orderItemsToInsert: CreateOrderItem[] = cartDetails.items.map(item => ({
         orderId: order.id,
@@ -88,14 +85,14 @@ class OrderService {
         quantity: item.quantity,
         unitPrice: item.price,
       }));
-      await OrderItemModel.createMany(orderItemsToInsert, tx);
 
-      await CartModel.clear(cartDetails.id); // TODO: Need to pass transaction context or use drizzle API instead here
+      await OrderItemModel.createMany(orderItemsToInsert);
+      await CartModel.clear(cartDetails.id);
 
-      return order;
+      return order.id;
     });
 
-    const orderDetails = await this.getOrderDetails(order.id);
+    const orderDetails = await this.getOrderDetails(orderId);
 
     return orderDetails!;
   }
@@ -158,9 +155,9 @@ class OrderService {
 
     if (order?.payment?.status === PaymentStatus.PAID) return;
 
-    await db.transaction(async tx => {
-      await OrderModel.updateById(orderId, { status: PaymentStatus.PAID }, tx);
-      await PaymentModel.updateByOrderId(orderId, { status: PaymentStatus.PAID }, tx);
+    await withTransaction<void>(async () => {
+      await OrderModel.updateById(orderId, { status: PaymentStatus.PAID });
+      await PaymentModel.updateByOrderId(orderId, { status: PaymentStatus.PAID });
     });
   }
 

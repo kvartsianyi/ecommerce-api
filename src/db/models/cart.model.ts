@@ -3,29 +3,28 @@ import { eq } from 'drizzle-orm';
 import { cartItems, carts } from '../schema';
 import { Cart } from '@/models';
 import { BaseModel } from './base.model';
-import db from '..';
 
 export class CartModel extends BaseModel {
   static async findById(id: number) {
-    return db.query.carts.findFirst({
+    return this.db.query.carts.findFirst({
       where: { id },
     });
   }
 
   static async findByUserId(userId: number) {
-    return db.query.carts.findFirst({
+    return this.db.query.carts.findFirst({
       where: { userId },
     });
   }
 
   static async create(userId: number) {
-    const [cart] = await db.insert(carts).values({ userId }).returning();
+    const [cart] = await this.db.insert(carts).values({ userId }).returning();
 
     return cart;
   }
 
   static async clear(cartId: number) {
-    const deletedCartItems = await db
+    const deletedCartItems = await this.db
       .delete(cartItems)
       .where(eq(cartItems.cartId, cartId))
       .returning();
@@ -44,7 +43,7 @@ export class CartModel extends BaseModel {
   }
 
   static async getCartDetails(userId: number) {
-    return db.query.carts.findFirst({
+    return this.db.query.carts.findFirst({
       where: {
         userId,
       },

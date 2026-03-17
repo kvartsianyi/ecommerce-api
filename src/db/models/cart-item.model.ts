@@ -1,35 +1,41 @@
-import { and, eq, getTableColumns, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
-import { cartItems, carts } from '../schema';
+import { cartItems } from '../schema';
 import { BaseModel } from './base.model';
-import db from '..';
 import { CartItem, UpsertCartItem } from '@/models';
 
 export class CartItemModel extends BaseModel {
-  static async findByCartId(cartId: number) {
-    const cartItemsList = await db.select().from(cartItems).where(eq(cartItems.cartId, cartId));
-
-    return cartItemsList;
+  static async findManyByCartId(cartId: number) {
+    return this.db.query.cartItems.findMany({
+      where: {
+        cartId,
+      },
+    });
   }
 
   static async findByIdAndUserId(id: number, userId: number) {
-    const [cartItem] = await db
-      .select(getTableColumns(cartItems))
-      .from(cartItems)
-      .innerJoin(carts, eq(cartItems.cartId, carts.id))
-      .where(and(eq(cartItems.id, id), eq(carts.userId, userId)));
-
-    return cartItem;
+    return this.db.query.cartItems.findFirst({
+      where: {
+        id,
+        cart: {
+          userId,
+        },
+      },
+    });
   }
 
   static async updateById(id: number, dto: Partial<CartItem>) {
-    const [cartItem] = await db.update(cartItems).set(dto).where(eq(cartItems.id, id)).returning();
+    const [cartItem] = await this.db
+      .update(cartItems)
+      .set(dto)
+      .where(eq(cartItems.id, id))
+      .returning();
 
     return cartItem;
   }
 
   static async upsertCartItem(cartItemData: UpsertCartItem) {
-    const [cartItem] = await db
+    const [cartItem] = await this.db
       .insert(cartItems)
       .values(cartItemData)
       .onConflictDoUpdate({
@@ -44,7 +50,7 @@ export class CartItemModel extends BaseModel {
   }
 
   static async deleteById(id: number) {
-    const [cartItem] = await db.delete(cartItems).where(eq(cartItems.id, id)).returning();
+    const [cartItem] = await this.db.delete(cartItems).where(eq(cartItems.id, id)).returning();
 
     return cartItem;
   }

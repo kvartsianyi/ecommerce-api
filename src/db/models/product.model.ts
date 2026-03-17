@@ -3,30 +3,33 @@ import { count as countFn, eq, SQL } from 'drizzle-orm';
 import { Product } from '@/models';
 import { products } from '../schema';
 import { BaseModel } from './base.model';
-import db from '..';
 import { calcOffset } from '@/utils';
 
 export class ProductModel extends BaseModel {
   static async findById(id: number) {
-    return db.query.products.findFirst({
+    return this.db.query.products.findFirst({
       where: { id },
     });
   }
 
   static async create(dto: Product) {
-    const [product] = await db.insert(products).values(dto).returning();
+    const [product] = await this.db.insert(products).values(dto).returning();
 
     return product;
   }
 
   static async updateById(id: number, dto: Partial<Product>) {
-    const [product] = await db.update(products).set(dto).where(eq(products.id, id)).returning();
+    const [product] = await this.db
+      .update(products)
+      .set(dto)
+      .where(eq(products.id, id))
+      .returning();
 
     return product;
   }
 
   static async deleteById(id: number) {
-    const [product] = await db.delete(products).where(eq(products.id, id)).returning();
+    const [product] = await this.db.delete(products).where(eq(products.id, id)).returning();
 
     return product;
   }
@@ -42,7 +45,7 @@ export class ProductModel extends BaseModel {
     page?: number;
     perPage?: number;
   }) {
-    return db
+    return this.db
       .select()
       .from(products)
       .where(whereConditions)
@@ -52,7 +55,10 @@ export class ProductModel extends BaseModel {
   }
 
   static async count(whereConditions: SQL | undefined): Promise<number> {
-    const [{ count }] = await db.select({ count: countFn() }).from(products).where(whereConditions);
+    const [{ count }] = await this.db
+      .select({ count: countFn() })
+      .from(products)
+      .where(whereConditions);
 
     return count;
   }
