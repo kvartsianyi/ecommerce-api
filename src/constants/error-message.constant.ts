@@ -18,6 +18,8 @@ export const ERROR_MESSAGES = {
   INSUFFICIENT_STOCK: 'Insufficient stock',
   ORDER_DOES_NOT_EXIST: 'Order does not exist',
   ORDER_ALREADY_PAID: 'Order is already paid',
+  MISSING_PAYMENT_INFO: 'Payment information is missing',
+  PAYMENT_SESSION_HAS_EXPIRED: 'Payment session has expired',
 } as const;
 
 export const MULTER_ERROR_CODE_MESSAGES: Partial<Record<multer.ErrorCode, string>> = {

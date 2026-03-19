@@ -1,53 +1,85 @@
 import Stripe from 'stripe';
 
 import { ENV } from '@/config';
-import db from '@/db';
-import { payments } from '@/db/schema';
-import orderService from './order.service';
+import { OrderDetails } from '@/models';
+import { OrderModel, PaymentModel, UserModel } from '@/db/models';
+import { OrderStatus, PaymentStatus } from '@/constants';
+import { withTransaction } from '@/db/transaction';
 
 const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 
-interface CreatePaymentIntentBody {
-  amount: number;
-  orderId: number;
-  customerEmail?: string;
-  description?: string;
-}
-
 class PaymentService {
-  async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-    const orderId = Number(paymentIntent.metadata.orderId);
+  async createCheckoutSession(
+    order: OrderDetails,
+  ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
+    const customer = await UserModel.findById(order.userId);
 
-    await orderService.markOrderPaid(orderId);
+    return stripe.checkout.sessions.create({
+      mode: 'payment',
+      currency: 'uah',
+      line_items: order.items.map(item => ({
+        price_data: {
+          currency: 'uah',
+          product_data: {
+            name: item.title,
+          },
+          unit_amount: item.unitPrice,
+        },
+        quantity: item.quantity,
+      })),
+      metadata: {
+        orderId: String(order.id),
+        userId: String(order.id),
+      },
+      customer_email: customer?.email,
+      billing_address_collection: 'auto',
+      client_reference_id: String(order.id),
+      payment_method_types: ['card'],
+      success_url: `${process.env.FRONTEND_URL}/thank-you?orderId=${order.id}`,
+      cancel_url: `${process.env.FRONTEND_URL}/`,
+    });
   }
 
-  async createPaymentIntent({
-    amount,
-    orderId,
-    customerEmail,
-    description,
-  }: CreatePaymentIntentBody): Promise<Stripe.PaymentIntent> {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'usd',
-      description: description ?? `Payment for order ${orderId}`,
-      receipt_email: customerEmail,
-      metadata: { orderId },
-      payment_method_types: ['card'],
-    });
+  async retrieveCheckoutSession(
+    sessionId: string,
+  ): Promise<Stripe.Response<Stripe.Checkout.Session>> {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    await db.insert(payments).values({
-      orderId,
-      stripePaymentId: paymentIntent.id,
-      amount,
-    });
-
-    return paymentIntent;
+    return session;
   }
 
   async retrievePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     return paymentIntent;
+  }
+
+  async handleSessionCompleted(session: Stripe.Checkout.Session) {
+    const orderId = Number(session.metadata?.orderId);
+    const userId = Number(session.metadata?.userId);
+    const paymentIntentId = String(session.payment_intent);
+
+    await withTransaction<void>(async () => {
+      const order = await OrderModel.findUnpaidById(orderId, userId);
+
+      if (!order) return;
+
+      await OrderModel.updateById(orderId, { status: OrderStatus.PAID });
+      await PaymentModel.updateByOrderId(orderId, {
+        status: PaymentStatus.PAID,
+        stripePaymentId: paymentIntentId,
+      });
+    });
+  }
+
+  async handleSessionExpired(session: Stripe.Checkout.Session) {
+    const orderId = Number(session.metadata?.orderId);
+    const userId = Number(session.metadata?.userId);
+
+    const order = await OrderModel.findActiveById(orderId, userId);
+
+    if (!order) return;
+
+    await OrderModel.updateById(orderId, { status: OrderStatus.CANCELED });
   }
 }
 

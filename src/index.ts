@@ -11,33 +11,39 @@ import { ENV } from '@/config';
 import { notFoundMiddleware, errorHandlerMiddleware } from '@/middlewares';
 import { API_PREFIX, LoggerContext, PUBLIC_ASSETS_ENDPOINT } from '@/constants';
 import webhookRouter from './routes/webhook.router';
+import webhookService from './services/webhook.service';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const app = express();
+async function bootstrap(): Promise<void> {
+  await webhookService.ensureStripeWebhookExists();
 
-app.use(`${API_PREFIX}/webhooks`, webhookRouter);
+  const app = express();
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+  app.use(`${API_PREFIX}/webhooks`, webhookRouter);
 
-app.use(PUBLIC_ASSETS_ENDPOINT, express.static(resolve(__dirname, '../', 'public')));
+  app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(morgan('dev'));
 
-app.use(API_PREFIX, routes);
-app.use(notFoundMiddleware);
-app.use(errorHandlerMiddleware);
+  app.use(PUBLIC_ASSETS_ENDPOINT, express.static(resolve(__dirname, '../', 'public')));
 
-const server = app.listen(ENV.PORT, () =>
-  logger.info('Server is running on port %d', ENV.PORT, { context: LoggerContext.BOOTSTRAP }),
-);
+  app.use(API_PREFIX, routes);
+  app.use(notFoundMiddleware);
+  app.use(errorHandlerMiddleware);
 
-const gracefulShutdown = (err?: Error | null) => server.close(() => process.exit(err ? 1 : 0));
+  const server = app.listen(ENV.PORT, () =>
+    logger.info('Server is running on port %d', ENV.PORT, { context: LoggerContext.BOOTSTRAP }),
+  );
 
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+  const gracefulShutdown = (err?: Error | null) => server.close(() => process.exit(err ? 1 : 0));
 
-process.on('uncaughtException', gracefulShutdown);
-process.on('unhandledRejection', gracefulShutdown);
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
+  process.on('uncaughtException', gracefulShutdown);
+  process.on('unhandledRejection', gracefulShutdown);
+}
+
+await bootstrap();
