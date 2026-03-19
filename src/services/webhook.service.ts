@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 import { ENV } from '@/config';
-import { API_PREFIX, LoggerContext, PaymentStatus, StripeEvent } from '@/constants';
+import { API_PREFIX, LoggerContext, OrderStatus, StripeEvent } from '@/constants';
 import logger from '@/logger';
 import paymentService from './payment.service';
 
@@ -9,25 +9,40 @@ const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 const STRIPE_WEBHOOK_URL = `${ENV.API_URL}${API_PREFIX}/webhooks/stripe`;
 
 class WebhookService {
-  async stripeWebhookHandler(event: Stripe.Event): Promise<void> {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    const stripeLogMeta = {
+  async handleStripeEvent(event: Stripe.Event): Promise<void> {
+    logger.info(`Recived event type ${event.type}`, {
       context: LoggerContext.STRIPE_WEBHOOK,
-      orderId: paymentIntent.metadata.orderId,
-      paymentIntentId: paymentIntent.id,
-    };
-
-    logger.info(`Recived event type ${event.type}`, stripeLogMeta);
+      eventId: event.id,
+    });
 
     switch (event.type) {
-      case StripeEvent.PaymentIntentSucceeded:
-        await paymentService.handlePaymentSucceeded(paymentIntent);
+      case StripeEvent.CheckoutSessionComplete:
+        const sessionComplete = event.data.object as Stripe.Checkout.Session;
 
-        logger.info(`Order marked as ${PaymentStatus.PAID}`, stripeLogMeta);
+        await paymentService.handleSessionCompleted(sessionComplete);
+
+        logger.info(`Order marked as ${OrderStatus.PAID}`, {
+          context: LoggerContext.STRIPE_WEBHOOK,
+          orderId: sessionComplete.metadata?.orderId,
+          userId: sessionComplete.metadata?.userId,
+          sessionId: sessionComplete.id,
+          paymentIntentId: sessionComplete.payment_intent,
+        });
+        break;
+      case StripeEvent.CheckoutSessionExpired:
+        const sessionExpired = event.data.object as Stripe.Checkout.Session;
+
+        await paymentService.handleSessionExpired(sessionExpired);
+
+        logger.info(`Order marked as ${OrderStatus.CANCELED}`, {
+          context: LoggerContext.STRIPE_WEBHOOK,
+          orderId: sessionExpired.metadata?.orderId,
+          userId: sessionExpired.metadata?.userId,
+          sessionId: sessionExpired.id,
+          paymentIntentId: sessionExpired.payment_intent,
+        });
         break;
       case StripeEvent.PaymentIntentFailed:
-        break;
-      case StripeEvent.PaymentIntentCanceled:
         break;
       default:
         logger.error(`Unhandled event type ${event.type}`, {
@@ -46,13 +61,17 @@ class WebhookService {
     if (!existingEndpoint) {
       await stripe.webhookEndpoints.create({
         enabled_events: [
-          StripeEvent.PaymentIntentSucceeded,
+          StripeEvent.CheckoutSessionComplete,
+          StripeEvent.CheckoutSessionExpired,
           StripeEvent.PaymentIntentFailed,
-          StripeEvent.PaymentIntentCanceled,
         ],
         url: STRIPE_WEBHOOK_URL,
       });
     }
+
+    logger.info('Stripe webhooks registered successfully!', {
+      context: LoggerContext.STRIPE_WEBHOOK,
+    });
   }
 }
 

@@ -1,6 +1,5 @@
 import { and, eq } from 'drizzle-orm';
 
-import db from '@/db';
 import { orders } from '@/db/schema';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@/exceptions';
 import {
@@ -21,12 +20,12 @@ import {
   OrderDetails,
   OrderDetailsItem,
   PaginatedResult,
+  CheckoutSessionDetails,
 } from '@/models';
 import { buildOrderBy, buildWhere, calcTotalPages } from '@/utils';
 import { CartModel, OrderItemModel, OrderModel, PaymentModel } from '@/db/models';
 import cartService from './cart.service';
 import paymentService from './payment.service';
-import webhookService from './webhook.service';
 import { withTransaction } from '@/db/transaction';
 
 class OrderService {
@@ -65,7 +64,7 @@ class OrderService {
     };
   }
 
-  async checkout(userId: number): Promise<OrderDetails> {
+  async checkout(userId: number): Promise<CheckoutSessionDetails> {
     const orderId = await withTransaction<number>(async () => {
       const cartDetails = await cartService.getCartDetails(userId);
 
@@ -94,7 +93,20 @@ class OrderService {
 
     const orderDetails = await this.getOrderDetails(orderId);
 
-    return orderDetails!;
+    const {
+      url: paymentUrl,
+      id: stripeSessionId,
+      amount_total,
+    } = await paymentService.createCheckoutSession(orderDetails!);
+
+    await PaymentModel.create({
+      orderId,
+      status: PaymentStatus.UNPAID,
+      amount: amount_total || 0,
+      stripeSessionId,
+    });
+
+    return { paymentUrl };
   }
 
   async getOrderById(orderId: number, userId: number): Promise<OrderDetails | null> {
@@ -111,54 +123,30 @@ class OrderService {
     return orderDetails;
   }
 
-  async payOrder(orderId: number, userId: number): Promise<string> {
-    const order = await db.query.orders.findFirst({
-      where: {
-        id: orderId,
-        userId,
-      },
-      with: { payment: true },
-    });
+  async payOrder(orderId: number, userId: number): Promise<CheckoutSessionDetails> {
+    const order = await OrderModel.findUnpaidById(orderId, userId);
 
     if (!order) {
       throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
     }
 
-    if (order?.payment?.status === PaymentStatus.PAID) {
+    if (!order.payment?.stripeSessionId) {
+      throw new BadRequestException(ERROR_MESSAGES.MISSING_PAYMENT_INFO);
+    }
+
+    const session = await paymentService.retrieveCheckoutSession(order.payment.stripeSessionId);
+
+    if (session.status === 'complete') {
       throw new BadRequestException(ERROR_MESSAGES.ORDER_ALREADY_PAID);
     }
 
-    await webhookService.ensureStripeWebhookExists();
-
-    let paymentIntent;
-    if (!order?.payment) {
-      paymentIntent = await paymentService.createPaymentIntent({
-        orderId,
-        amount: order.totalAmount,
-      });
-    } else {
-      paymentIntent = await paymentService.retrievePaymentIntent(order.payment.stripePaymentId);
+    if (session.status === 'expired') {
+      throw new BadRequestException(ERROR_MESSAGES.PAYMENT_SESSION_HAS_EXPIRED);
     }
 
-    return paymentIntent.id;
-  }
-
-  async markOrderPaid(orderId: number): Promise<void> {
-    const order = await db.query.orders.findFirst({
-      where: { id: orderId },
-      with: { payment: true },
-    });
-
-    if (!order) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
-    }
-
-    if (order?.payment?.status === PaymentStatus.PAID) return;
-
-    await withTransaction<void>(async () => {
-      await OrderModel.updateById(orderId, { status: PaymentStatus.PAID });
-      await PaymentModel.updateByOrderId(orderId, { status: PaymentStatus.PAID });
-    });
+    return {
+      paymentUrl: session.url,
+    };
   }
 
   async getOrderDetails(orderId: number): Promise<OrderDetails | null> {

@@ -4,11 +4,41 @@ import { BaseModel } from './base.model';
 import { orders } from '../schema';
 import { CreateOrder, Order } from '@/models';
 import { calcOffset } from '@/utils';
+import { OrderStatus, PaymentStatus } from '@/constants';
 
 export class OrderModel extends BaseModel {
   static async findById(id: number) {
     return this.db.query.orders.findFirst({
       where: { id },
+    });
+  }
+
+  static async findUnpaidById(id: number, userId?: number) {
+    return this.db.query.orders.findFirst({
+      where: {
+        id,
+        userId,
+        status: OrderStatus.PENDING,
+      },
+      with: {
+        payment: {
+          where: {
+            NOT: { status: PaymentStatus.PAID },
+          },
+        },
+      },
+    });
+  }
+
+  static async findActiveById(id: number, userId?: number) {
+    return this.db.query.orders.findFirst({
+      where: {
+        id,
+        userId,
+        NOT: {
+          status: OrderStatus.CANCELED,
+        },
+      },
     });
   }
 

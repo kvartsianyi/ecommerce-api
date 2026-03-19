@@ -1,5 +1,5 @@
 export const StripeEvent = {
-  PaymentIntentSucceeded: 'payment_intent.succeeded',
+  CheckoutSessionComplete: 'checkout.session.completed',
+  CheckoutSessionExpired: 'checkout.session.expired',
   PaymentIntentFailed: 'payment_intent.payment_failed',
-  PaymentIntentCanceled: 'payment_intent.canceled',
 } as const;

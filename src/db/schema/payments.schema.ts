@@ -15,7 +15,8 @@ const payments = pgTable(
     orderId: integer('order_id')
       .notNull()
       .references(() => orders.id, { onDelete: 'cascade' }),
-    stripePaymentId: varchar('stripe_payment_id', { length: 255 }).notNull(),
+    stripeSessionId: varchar('stripe_session_id', { length: 255 }).notNull(),
+    stripePaymentId: varchar('stripe_payment_id', { length: 255 }),
     status: paymentStatusEnum().notNull().default(PaymentStatus.UNPAID),
     amount: integer('amount').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
