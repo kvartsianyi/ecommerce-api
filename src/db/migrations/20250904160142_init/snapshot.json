@@ -854,20 +854,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "first_name",
-      "schema": "public",
-      "table": "users",
-      "entityType": "columns"
-    },
-    {
-      "type": "varchar(50)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "last_name",
+      "name": "name",
       "schema": "public",
       "table": "users",
       "entityType": "columns"
