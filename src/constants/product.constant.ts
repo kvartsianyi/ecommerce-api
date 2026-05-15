@@ -13,10 +13,6 @@ export const PRODUCT_VALIDATION_CONDITIONS = {
     MIN: 0,
     MAX: 100_000_000,
   },
-  STOCK: {
-    MIN: 0,
-    MAX: 100_000_000,
-  },
 } as const;
 
 export const PRODUCT_IMAGE_CONFIG = {
