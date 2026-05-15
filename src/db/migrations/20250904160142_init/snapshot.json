@@ -708,19 +708,6 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "stock",
-      "schema": "public",
-      "table": "products",
-      "entityType": "columns"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
       "name": "user_id",
       "schema": "public",
       "table": "products",
@@ -755,13 +742,6 @@
     {
       "value": "\"products\".\"price\" >= 0",
       "name": "products_price_check",
-      "schema": "public",
-      "table": "products",
-      "entityType": "checks"
-    },
-    {
-      "value": "\"products\".\"stock\" >= 0",
-      "name": "products_stock_check",
       "schema": "public",
       "table": "products",
       "entityType": "checks"

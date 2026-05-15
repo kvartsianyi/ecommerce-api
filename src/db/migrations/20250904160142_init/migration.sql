@@ -61,12 +61,10 @@ CREATE TABLE "products" (
 	"description" text,
 	"picture" varchar(255),
 	"price" integer NOT NULL,
-	"stock" integer NOT NULL,
 	"user_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "products_price_check" CHECK ("products"."price" >= 0),
-	CONSTRAINT "products_stock_check" CHECK ("products"."stock" >= 0)
+	CONSTRAINT "products_price_check" CHECK ("products"."price" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "users" (

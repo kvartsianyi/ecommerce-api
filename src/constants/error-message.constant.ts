@@ -15,7 +15,6 @@ export const ERROR_MESSAGES = {
   PRODUCT_DOES_NOT_EXIST: 'Product does not exist',
   CART_IS_EMPTY: 'Cart is empty',
   CART_ITEM_DOES_NOT_EXIST: 'Cart item does not exist',
-  INSUFFICIENT_STOCK: 'Insufficient stock',
   ORDER_DOES_NOT_EXIST: 'Order does not exist',
   ORDER_ALREADY_PAID: 'Order is already paid',
   MISSING_PAYMENT_INFO: 'Payment information is missing',

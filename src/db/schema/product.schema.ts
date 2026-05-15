@@ -20,7 +20,6 @@ const products = pgTable(
     description: text(),
     picture: varchar({ length: 255 }),
     price: integer().notNull(),
-    stock: integer().notNull(),
     userId: integer('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -29,7 +28,6 @@ const products = pgTable(
   },
   table => [
     check('products_price_check', sql`${table.price} >= 0`),
-    check('products_stock_check', sql`${table.stock} >= 0`),
     index('products_title_idx').on(table.title),
   ],
 );
