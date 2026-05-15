@@ -18,7 +18,7 @@ const products = pgTable(
     id: serial().primaryKey(),
     title: varchar({ length: 50 }).notNull(),
     description: text(),
-    picture: varchar({ length: 255 }),
+    image: varchar({ length: 255 }),
     price: integer().notNull(),
     userId: integer('user_id')
       .notNull()

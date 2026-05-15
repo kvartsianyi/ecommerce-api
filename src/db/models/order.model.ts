@@ -60,11 +60,7 @@ export class OrderModel extends BaseModel {
         id: orderId,
       },
       with: {
-        items: {
-          with: {
-            product: true,
-          },
-        },
+        items: true,
       },
     });
   }

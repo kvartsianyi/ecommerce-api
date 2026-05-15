@@ -15,11 +15,15 @@ class CartService {
       id: item.id,
       quantity: item.quantity,
       productId: item.product!.id,
-      title: item.product!.title,
-      picture: item.product!.picture,
-      price: item.product!.price,
+      productTitle: item.product!.title,
+      productImage: item.product!.image,
+      productDescription: item.product!.description,
+      productPrice: item.product!.price,
     }));
-    const totalAmount = items.reduce((sum, { price, quantity }) => sum + price * quantity, 0);
+    const totalAmount = items.reduce(
+      (sum, { productPrice, quantity }) => sum + productPrice * quantity,
+      0,
+    );
 
     return {
       id: cartDetails.id,

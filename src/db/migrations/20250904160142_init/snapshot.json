@@ -293,6 +293,45 @@
       "entityType": "columns"
     },
     {
+      "type": "varchar(50)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "product_title",
+      "schema": "public",
+      "table": "order_items",
+      "entityType": "columns"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "product_description",
+      "schema": "public",
+      "table": "order_items",
+      "entityType": "columns"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "product_image",
+      "schema": "public",
+      "table": "order_items",
+      "entityType": "columns"
+    },
+    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -682,7 +721,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "picture",
+      "name": "image",
       "schema": "public",
       "table": "products",
       "entityType": "columns"
