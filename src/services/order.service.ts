@@ -18,7 +18,6 @@ import {
   OrderFilters,
   OrderOrderByFields,
   OrderDetails,
-  OrderDetailsItem,
   PaginatedResult,
   CheckoutSessionDetails,
 } from '@/models';
@@ -81,8 +80,11 @@ class OrderService {
       const orderItemsToInsert: CreateOrderItem[] = cartDetails.items.map(item => ({
         orderId: order.id,
         productId: item.productId,
+        productTitle: item.productTitle,
+        productDescription: item.productDescription,
+        productImage: item.productImage,
+        unitPrice: item.productPrice,
         quantity: item.quantity,
-        unitPrice: item.price,
       }));
 
       await OrderItemModel.createMany(orderItemsToInsert);
@@ -91,13 +93,17 @@ class OrderService {
       return order.id;
     });
 
-    const orderDetails = await this.getOrderDetails(orderId);
+    const orderDetails = await OrderModel.getOrderDetails(orderId);
+
+    if (!orderDetails) {
+      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
+    }
 
     const {
       url: paymentUrl,
       id: stripeSessionId,
       amount_total,
-    } = await paymentService.createCheckoutSession(orderDetails!);
+    } = await paymentService.createCheckoutSession(orderDetails);
 
     await PaymentModel.create({
       orderId,
@@ -110,7 +116,7 @@ class OrderService {
   }
 
   async getOrderById(orderId: number, userId: number): Promise<OrderDetails | null> {
-    const orderDetails = await this.getOrderDetails(orderId);
+    const orderDetails = await OrderModel.getOrderDetails(orderId);
 
     if (!orderDetails) {
       throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
@@ -146,31 +152,6 @@ class OrderService {
 
     return {
       paymentUrl: session.url,
-    };
-  }
-
-  async getOrderDetails(orderId: number): Promise<OrderDetails | null> {
-    const orderDetails = await OrderModel.getOrderDetails(orderId);
-
-    if (!orderDetails) {
-      return null;
-    }
-
-    const items: OrderDetailsItem[] = orderDetails.items.map(item => ({
-      id: item.id,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-      orderId: item.orderId,
-      productId: item.productId,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      title: item.product!.title,
-      picture: item.product!.picture,
-    }));
-
-    return {
-      ...orderDetails,
-      items,
     };
   }
 }

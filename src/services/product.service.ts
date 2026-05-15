@@ -93,9 +93,9 @@ class ProductService {
       throw new NotFoundException(ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST);
     }
 
-    const updatedProduct = await ProductModel.updateById(productId, { picture: file.path });
+    const updatedProduct = await ProductModel.updateById(productId, { image: file.path });
 
-    const publicId = cloudinaryService.getPublicIdFromUrl(product.picture);
+    const publicId = cloudinaryService.getPublicIdFromUrl(product.image);
     if (publicId) {
       await cloudinaryService.delete(publicId);
     }

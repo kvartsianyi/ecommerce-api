@@ -13,10 +13,11 @@ export interface UpsertCartItem {
 export interface CartDetailsItem {
   id: number;
   productId: number;
-  title: string;
-  price: number;
+  productTitle: string;
+  productDescription?: string | null;
+  productImage: string | null;
+  productPrice: number;
   quantity: number;
-  picture: string | null;
 }
 
 export interface CartDetails {

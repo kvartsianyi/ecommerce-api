@@ -21,7 +21,7 @@ class PaymentService {
         price_data: {
           currency: 'uah',
           product_data: {
-            name: item.title,
+            name: item.productTitle,
           },
           unit_amount: item.unitPrice,
         },
