@@ -9,7 +9,7 @@ const validate =
   (schema: ObjectSchema, path: ValidationPath = 'body') =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const value = await schema.validateAsync(req[path], {
+      const value = await schema.validateAsync(req[path] ?? {}, {
         abortEarly: false,
         stripUnknown: true,
       });
