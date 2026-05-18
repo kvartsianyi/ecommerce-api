@@ -20,7 +20,7 @@ const users = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
-  table => [check('users_phone_check', sql`${table.phone} ~ '${REGEXP.PHONE_NUMBER}'`)],
+  table => [check('users_phone_check', sql`${table.phone} ~ ${REGEXP.PHONE_NUMBER.source}`)],
 );
 
 export default users;

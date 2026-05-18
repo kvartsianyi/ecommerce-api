@@ -1,65 +1,72 @@
--- migrate:up
-CREATE TYPE "public"."order_status" AS ENUM('pending', 'paid', 'canceled');--> statement-breakpoint
-CREATE TYPE "public"."payment_status" AS ENUM('unpaid', 'paid', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."user_role" AS ENUM('admin', 'user');--> statement-breakpoint
+CREATE TYPE "order_status" AS ENUM('pending', 'paid', 'canceled');--> statement-breakpoint
+CREATE TYPE "payment_method" AS ENUM('card', 'cash');--> statement-breakpoint
+CREATE TYPE "payment_status" AS ENUM('unpaid', 'paid', 'failed');--> statement-breakpoint
+CREATE TYPE "pickup_method" AS ENUM('delivery', 'pickup');--> statement-breakpoint
+CREATE TYPE "user_role" AS ENUM('admin', 'user');--> statement-breakpoint
 CREATE TABLE "cart_items" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"cart_id" integer NOT NULL,
 	"product_id" integer NOT NULL,
 	"quantity" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "cart_items_cart_id_product_id_unique" UNIQUE("cart_id","product_id"),
-	CONSTRAINT "cart_items_product_quantity_check" CHECK ("cart_items"."quantity" > 0)
+	CONSTRAINT "cart_items_product_quantity_check" CHECK ("quantity" > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "carts" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"id" serial PRIMARY KEY,
+	"user_id" integer NOT NULL CONSTRAINT "carts_user_id_unique" UNIQUE,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "carts_user_id_unique" UNIQUE("user_id")
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "order_items" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"order_id" integer NOT NULL,
 	"product_id" integer NOT NULL,
-	"quantity" integer NOT NULL,
 	"product_title" varchar(50) NOT NULL,
 	"product_description" text,
 	"product_image" varchar(255),
+	"quantity" integer NOT NULL,
 	"unit_price" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "order_items_product_quantity_check" CHECK ("order_items"."quantity" > 0),
-	CONSTRAINT "order_items_unit_price_check" CHECK ("order_items"."unit_price" >= 0)
+	CONSTRAINT "order_items_product_quantity_check" CHECK ("quantity" > 0),
+	CONSTRAINT "order_items_unit_price_check" CHECK ("unit_price" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "orders" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"user_id" integer NOT NULL,
-	"status" "order_status" DEFAULT 'pending' NOT NULL,
+	"recipient_name" varchar(50) NOT NULL,
+	"recipient_phone" varchar(20) NOT NULL,
+	"status" "order_status" DEFAULT 'pending'::"order_status" NOT NULL,
 	"total_amount" integer NOT NULL,
+	"pickup_method" "pickup_method" NOT NULL,
+	"payment_method" "payment_method" NOT NULL,
+	"delivery_address" varchar(100),
+	"comment" varchar(200),
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "orders_total_amount_check" CHECK ("orders"."total_amount" >= 0)
+	CONSTRAINT "orders_total_amount_check" CHECK ("total_amount" >= 0),
+	CONSTRAINT "recipient_phone_check" CHECK ("recipient_phone" ~ '^\+380\d{9}$')
 );
 --> statement-breakpoint
 CREATE TABLE "payments" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"order_id" integer NOT NULL,
 	"stripe_session_id" varchar(255) NOT NULL,
 	"stripe_payment_id" varchar(255),
-	"status" "payment_status" DEFAULT 'unpaid' NOT NULL,
+	"status" "payment_status" DEFAULT 'unpaid'::"payment_status" NOT NULL,
 	"amount" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "payments_amount_check" CHECK ("payments"."amount" >= 0)
+	CONSTRAINT "payments_amount_check" CHECK ("amount" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "products" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"title" varchar(50) NOT NULL,
 	"description" text,
 	"image" varchar(255),
@@ -67,22 +74,20 @@ CREATE TABLE "products" (
 	"user_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "products_price_check" CHECK ("products"."price" >= 0)
+	CONSTRAINT "products_price_check" CHECK ("price" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY,
 	"name" varchar(50) NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"phone" varchar(20) NOT NULL,
+	"email" varchar(255) NOT NULL UNIQUE,
+	"phone" varchar(20) NOT NULL UNIQUE,
 	"password" varchar(255) NOT NULL,
-	"role" "user_role" DEFAULT 'user' NOT NULL,
+	"role" "user_role" DEFAULT 'user'::"user_role" NOT NULL,
 	"is_email_confirmed" boolean DEFAULT false,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "users_email_unique" UNIQUE("email"),
-	CONSTRAINT "users_phone_unique" UNIQUE("phone"),
-	CONSTRAINT "users_phone_check" CHECK (phone ~ '^\+380\d{9}$')
+	CONSTRAINT "users_phone_check" CHECK ("phone" ~ '^\+380\d{9}$')
 );
 --> statement-breakpoint
 
@@ -108,15 +113,15 @@ CREATE TRIGGER updated_at_trigger BEFORE UPDATE ON order_items
 CREATE TRIGGER updated_at_trigger BEFORE UPDATE ON payments
   FOR EACH ROW EXECUTE PROCEDURE updated_at_trigger();
 
-ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fk" FOREIGN KEY ("cart_id") REFERENCES "public"."carts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "orders" ADD CONSTRAINT "orders_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "payments" ADD CONSTRAINT "payments_order_id_orders_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "products" ADD CONSTRAINT "products_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "products_title_idx" ON "products" USING btree ("title");
+CREATE INDEX "products_title_idx" ON "products" ("title");--> statement-breakpoint
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fkey" FOREIGN KEY ("cart_id") REFERENCES "carts"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_product_id_products_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_orders_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_products_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_order_id_orders_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "products" ADD CONSTRAINT "products_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 
 -- migrate:down
 -- DROP TRIGGER IF EXISTS updated_at_trigger ON users;
@@ -137,3 +142,5 @@ CREATE INDEX "products_title_idx" ON "products" USING btree ("title");
 -- DROP TYPE IF EXISTS "public"."user_role";
 -- DROP TYPE IF EXISTS "public"."order_status";
 -- DROP TYPE IF EXISTS "public"."payment_status";
+-- DROP TYPE IF EXISTS "public"."pickup_method";
+-- DROP TYPE IF EXISTS "public"."payment_method";

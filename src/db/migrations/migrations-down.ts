@@ -9,9 +9,9 @@ const DOWN_SIGN = '-- migrate:down';
 
 let migration;
 
-migration = '20250904160142_init';
+migration = '20260518180649_init';
 
-const rollback = async (migration?: string): Promise<void> => {
+const rollback = async (migration: string): Promise<void> => {
   if (!migration) {
     console.log('No migration files found.');
     return;
