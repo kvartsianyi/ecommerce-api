@@ -1,4 +1,13 @@
 import { defineConfig } from 'drizzle-kit';
+import { register } from 'tsconfig-paths';
+
+import tsConfig from './tsconfig.json';
+
+const baseUrl = '.';
+register({
+  baseUrl,
+  paths: tsConfig.compilerOptions.paths,
+});
 
 export default defineConfig({
   schema: './src/db/schema/index.ts',
