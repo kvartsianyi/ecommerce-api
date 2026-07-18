@@ -13,7 +13,7 @@ try {
     .values([
       {
         name: 'Admin',
-        email: 'admin-email@domain.com',
+        email: 'admin-email@yopmail.com',
         phone: '+380991234567',
         password: '$2b$10$WwvROkO1gvDi0UEkGEDSl.n2zm9wHlL9DXtlwoDCfxzTkIOAR5Y1C',
         role: UserRole.ADMIN,
