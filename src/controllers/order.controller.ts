@@ -17,7 +17,7 @@ class OrderController {
   async checkout(req: Request, res: Response): Promise<Response> {
     const user = req.user!;
 
-    const order = await orderService.checkout(user.id);
+    const order = await orderService.checkout(user.id, req.body);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(order));
   }
@@ -29,15 +29,6 @@ class OrderController {
     const order = await orderService.getOrderById(orderId, user.id);
 
     return res.status(HttpStatusCode.OK).json(serializeResponse(order));
-  }
-
-  async payOrder(req: Request, res: Response): Promise<Response> {
-    const orderId = parseInt(req.params.id);
-    const user = req.user!;
-
-    const { paymentUrl } = await orderService.payOrder(orderId, user.id);
-
-    return res.status(HttpStatusCode.OK).json(serializeResponse({ paymentUrl }));
   }
 }
 

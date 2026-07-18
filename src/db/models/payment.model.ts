@@ -2,10 +2,16 @@ import { eq } from 'drizzle-orm';
 
 import { BaseModel } from './base.model';
 import { payments } from '../schema';
-import { Payment } from '@/models';
+import { CreatePayment, Payment } from '@/models';
 
 export class PaymentModel extends BaseModel {
-  static async create(dto: Omit<Payment, 'id' | 'stripePaymentId' | 'createdAt' | 'updatedAt'>) {
+  static async findByOrderId(id: number) {
+    return this.db.query.payments.findFirst({
+      where: { id },
+    });
+  }
+
+  static async create(dto: CreatePayment) {
     return this.db.insert(payments).values(dto).returning();
   }
 

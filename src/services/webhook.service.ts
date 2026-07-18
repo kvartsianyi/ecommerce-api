@@ -3,9 +3,10 @@ import Stripe from 'stripe';
 import { ENV } from '@/config';
 import { API_PREFIX, LoggerContext, OrderStatus, StripeEvent } from '@/constants';
 import logger from '@/logger';
-import paymentService from './payment.service';
+import { StripeProvider } from './payment/providers/stripe';
 
 const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
+const stripeProvider = new StripeProvider();
 const STRIPE_WEBHOOK_URL = `${ENV.API_URL}${API_PREFIX}/webhooks/stripe`;
 
 class WebhookService {
@@ -19,7 +20,7 @@ class WebhookService {
       case StripeEvent.CheckoutSessionComplete:
         const sessionComplete = event.data.object as Stripe.Checkout.Session;
 
-        await paymentService.handleSessionCompleted(sessionComplete);
+        await stripeProvider.handleSessionCompleted(sessionComplete);
 
         logger.info(`Order marked as ${OrderStatus.PAID}`, {
           context: LoggerContext.STRIPE_WEBHOOK,
@@ -32,7 +33,7 @@ class WebhookService {
       case StripeEvent.CheckoutSessionExpired:
         const sessionExpired = event.data.object as Stripe.Checkout.Session;
 
-        await paymentService.handleSessionExpired(sessionExpired);
+        await stripeProvider.handleSessionExpired(sessionExpired);
 
         logger.info(`Order marked as ${OrderStatus.CANCELED}`, {
           context: LoggerContext.STRIPE_WEBHOOK,
