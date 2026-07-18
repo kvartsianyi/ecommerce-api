@@ -2,15 +2,13 @@ import { sql } from 'drizzle-orm';
 import { serial, pgTable, timestamp, integer, pgEnum, check, varchar } from 'drizzle-orm/pg-core';
 
 import users from './user.schema';
-import { OrderStatus, PaymentMethod, PickupMethod, REGEXP } from '@/constants';
+import { OrderStatus, PickupMethod, REGEXP } from '@/constants';
 
 const orderStatus = Object.values(OrderStatus) as [string, ...string[]];
 const pickupMethod = Object.values(PickupMethod) as [string, ...string[]];
-const paymentMethod = Object.values(PaymentMethod) as [string, ...string[]];
 
 export const orderStatusEnum = pgEnum('order_status', orderStatus);
 export const pickupMethodEnum = pgEnum('pickup_method', pickupMethod);
-export const paymentMethodEnum = pgEnum('payment_method', paymentMethod);
 
 const orders = pgTable(
   'orders',
@@ -24,7 +22,6 @@ const orders = pgTable(
     status: orderStatusEnum().notNull().default(OrderStatus.PENDING),
     totalAmount: integer('total_amount').notNull(),
     pickupMethod: pickupMethodEnum('pickup_method').notNull(),
-    paymentMethod: paymentMethodEnum('payment_method').notNull(),
     deliveryAddress: varchar('delivery_address', { length: 100 }),
     comment: varchar('comment', { length: 200 }),
     createdAt: timestamp('created_at').notNull().defaultNow(),

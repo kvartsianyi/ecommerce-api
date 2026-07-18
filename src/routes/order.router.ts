@@ -9,7 +9,6 @@ const orderRouter = Router();
 orderRouter
   .get('/', jwtAuth, validateQuery(getOrdersQuery), orderController.getOrders)
   .get('/:id', jwtAuth, validateIdParam, orderController.getOrderById)
-  .post('/', jwtAuth, validateBody(checkoutSchema), orderController.checkout)
-  .post('/:id/pay', jwtAuth, validateIdParam, orderController.payOrder);
+  .post('/', jwtAuth, validateBody(checkoutSchema), orderController.checkout);
 
 export default orderRouter;

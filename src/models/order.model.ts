@@ -1,10 +1,19 @@
-import { OrderStatus } from '@/constants';
+import { OrderStatus, PaymentMethod, PickupMethod } from '@/constants';
 import { orderItems, orders } from '@/db/schema';
 import { OrderByParams, PaginationParams } from './api.model';
 
 export type Order = typeof orders.$inferSelect;
 
 export type OrderItem = typeof orderItems.$inferSelect;
+
+export interface CheckoutPayload {
+  recipientName: string;
+  recipientPhone: string;
+  pickupMethod: PickupMethod;
+  paymentMethod: PaymentMethod;
+  deliveryAddress?: string;
+  comment?: string;
+}
 
 export interface OrderDetails {
   id: number;
@@ -20,6 +29,11 @@ export interface CreateOrder {
   userId: number;
   status: OrderStatus.PENDING;
   totalAmount: number;
+  recipientName: string;
+  recipientPhone: string;
+  pickupMethod: PickupMethod;
+  deliveryAddress?: string;
+  comment?: string;
 }
 
 export interface CreateOrderItem {

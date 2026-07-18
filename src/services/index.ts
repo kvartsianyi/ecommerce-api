@@ -6,4 +6,4 @@ export { default as cloudinaryService } from './cloudinary.service';
 export { default as productService } from './product.service';
 export { default as cartService } from './cart.service';
 export { default as orderService } from './order.service';
-export { default as paymentService } from './payment.service';
+export { paymentService } from './payment';

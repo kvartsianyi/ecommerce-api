@@ -10,7 +10,7 @@ export enum PickupMethod {
 }
 
 export enum PaymentMethod {
-  CARD = 'card',
+  STRIPE = 'stripe',
   CASH = 'cash',
 }
 
@@ -24,3 +24,8 @@ export const ORDER_VALIDATION_CONDITIONS = {
     MAX: 200,
   },
 } as const;
+
+export const DELIVERY_COSTS: Record<PickupMethod, number> = {
+  [PickupMethod.DELIVERY]: 9900,
+  [PickupMethod.PICKUP]: 0,
+};

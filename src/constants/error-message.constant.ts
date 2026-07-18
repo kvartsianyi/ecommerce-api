@@ -17,8 +17,6 @@ export const ERROR_MESSAGES = {
   CART_ITEM_DOES_NOT_EXIST: 'Cart item does not exist',
   ORDER_DOES_NOT_EXIST: 'Order does not exist',
   ORDER_ALREADY_PAID: 'Order is already paid',
-  MISSING_PAYMENT_INFO: 'Payment information is missing',
-  PAYMENT_SESSION_HAS_EXPIRED: 'Payment session has expired',
 } as const;
 
 export const MULTER_ERROR_CODE_MESSAGES: Partial<Record<multer.ErrorCode, string>> = {

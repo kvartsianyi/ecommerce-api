@@ -1,5 +1,5 @@
 CREATE TYPE "order_status" AS ENUM('pending', 'paid', 'canceled');--> statement-breakpoint
-CREATE TYPE "payment_method" AS ENUM('card', 'cash');--> statement-breakpoint
+CREATE TYPE "payment_method" AS ENUM('stripe', 'cash');--> statement-breakpoint
 CREATE TYPE "payment_status" AS ENUM('unpaid', 'paid', 'failed');--> statement-breakpoint
 CREATE TYPE "pickup_method" AS ENUM('delivery', 'pickup');--> statement-breakpoint
 CREATE TYPE "user_role" AS ENUM('admin', 'user');--> statement-breakpoint
@@ -44,7 +44,6 @@ CREATE TABLE "orders" (
 	"status" "order_status" DEFAULT 'pending'::"order_status" NOT NULL,
 	"total_amount" integer NOT NULL,
 	"pickup_method" "pickup_method" NOT NULL,
-	"payment_method" "payment_method" NOT NULL,
 	"delivery_address" varchar(100),
 	"comment" varchar(200),
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -56,10 +55,11 @@ CREATE TABLE "orders" (
 CREATE TABLE "payments" (
 	"id" serial PRIMARY KEY,
 	"order_id" integer NOT NULL,
-	"stripe_session_id" varchar(255) NOT NULL,
+	"stripe_session_id" varchar(255),
 	"stripe_payment_id" varchar(255),
 	"status" "payment_status" DEFAULT 'unpaid'::"payment_status" NOT NULL,
 	"amount" integer NOT NULL,
+	"method" "payment_method" NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "payments_amount_check" CHECK ("amount" >= 0)

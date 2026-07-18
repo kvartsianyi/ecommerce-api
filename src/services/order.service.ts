@@ -5,9 +5,10 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@/ex
 import {
   DEFAULT_ITEMS_PER_PAGE,
   DEFAULT_PAGE_NUMBER,
+  DELIVERY_COSTS,
   ERROR_MESSAGES,
   OrderStatus,
-  PaymentStatus,
+  PickupMethod,
 } from '@/constants';
 import {
   CreateOrderItem,
@@ -20,11 +21,13 @@ import {
   OrderDetails,
   PaginatedResult,
   CheckoutSessionDetails,
+  CheckoutPayload,
+  CartDetailsItem,
 } from '@/models';
 import { buildOrderBy, buildWhere, calcTotalPages } from '@/utils';
-import { CartModel, OrderItemModel, OrderModel, PaymentModel } from '@/db/models';
+import { CartModel, OrderItemModel, OrderModel } from '@/db/models';
 import cartService from './cart.service';
-import paymentService from './payment.service';
+import { paymentService } from './payment';
 import { withTransaction } from '@/db/transaction';
 
 class OrderService {
@@ -63,7 +66,48 @@ class OrderService {
     };
   }
 
-  async checkout(userId: number): Promise<CheckoutSessionDetails> {
+  async checkout(userId: number, checkoutData: CheckoutPayload): Promise<CheckoutSessionDetails> {
+    const orderId = await this.createFromCart(userId, checkoutData);
+    const orderDetails = await OrderModel.getOrderDetails(orderId);
+
+    if (!orderDetails) {
+      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
+    }
+
+    const { paymentUrl } = await paymentService.createPayment(
+      orderId,
+      orderDetails.totalAmount,
+      checkoutData.paymentMethod,
+    );
+
+    return { paymentUrl, orderId };
+  }
+
+  async getOrderById(orderId: number, userId: number): Promise<OrderDetails | null> {
+    const orderDetails = await OrderModel.getOrderDetails(orderId);
+
+    if (!orderDetails) {
+      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
+    }
+
+    if (orderDetails.userId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    return orderDetails;
+  }
+
+  private async createFromCart(
+    userId: number,
+    // prettier-ignore
+    {
+      recipientName,
+      recipientPhone,
+      pickupMethod,
+      deliveryAddress,
+      comment,
+    }: CheckoutPayload,
+  ): Promise<number> {
     const orderId = await withTransaction<number>(async () => {
       const cartDetails = await cartService.getCartDetails(userId);
 
@@ -71,10 +115,16 @@ class OrderService {
         throw new BadRequestException(ERROR_MESSAGES.CART_IS_EMPTY);
       }
 
+      const totalAmount = this.calculateTotalAmount(cartDetails.items, pickupMethod);
       const order = await OrderModel.create({
         userId,
         status: OrderStatus.PENDING,
-        totalAmount: cartDetails.totalAmount,
+        totalAmount,
+        recipientName,
+        recipientPhone,
+        pickupMethod,
+        deliveryAddress,
+        comment,
       });
 
       const orderItemsToInsert: CreateOrderItem[] = cartDetails.items.map(item => ({
@@ -93,66 +143,14 @@ class OrderService {
       return order.id;
     });
 
-    const orderDetails = await OrderModel.getOrderDetails(orderId);
-
-    if (!orderDetails) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
-    }
-
-    const {
-      url: paymentUrl,
-      id: stripeSessionId,
-      amount_total,
-    } = await paymentService.createCheckoutSession(orderDetails);
-
-    await PaymentModel.create({
-      orderId,
-      status: PaymentStatus.UNPAID,
-      amount: amount_total || 0,
-      stripeSessionId,
-    });
-
-    return { paymentUrl };
+    return orderId;
   }
 
-  async getOrderById(orderId: number, userId: number): Promise<OrderDetails | null> {
-    const orderDetails = await OrderModel.getOrderDetails(orderId);
+  private calculateTotalAmount(items: CartDetailsItem[], pickupMethod: PickupMethod): number {
+    const subtotal = items.reduce((total, item) => total + item.productPrice * item.quantity, 0);
+    const deliveryCost = DELIVERY_COSTS[pickupMethod];
 
-    if (!orderDetails) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
-    }
-
-    if (orderDetails.userId !== userId) {
-      throw new ForbiddenException();
-    }
-
-    return orderDetails;
-  }
-
-  async payOrder(orderId: number, userId: number): Promise<CheckoutSessionDetails> {
-    const order = await OrderModel.findUnpaidById(orderId, userId);
-
-    if (!order) {
-      throw new NotFoundException(ERROR_MESSAGES.ORDER_DOES_NOT_EXIST);
-    }
-
-    if (!order.payment?.stripeSessionId) {
-      throw new BadRequestException(ERROR_MESSAGES.MISSING_PAYMENT_INFO);
-    }
-
-    const session = await paymentService.retrieveCheckoutSession(order.payment.stripeSessionId);
-
-    if (session.status === 'complete') {
-      throw new BadRequestException(ERROR_MESSAGES.ORDER_ALREADY_PAID);
-    }
-
-    if (session.status === 'expired') {
-      throw new BadRequestException(ERROR_MESSAGES.PAYMENT_SESSION_HAS_EXPIRED);
-    }
-
-    return {
-      paymentUrl: session.url,
-    };
+    return subtotal + deliveryCost;
   }
 }
 
